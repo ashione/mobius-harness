@@ -1,45 +1,374 @@
 {
   "id": "team-subagent-orchestrator",
   "title": "Team Subagent Orchestrator",
-  "description": "Enable a leader main agent to manage a team of 3-5 subagents for completing long-running, multi-iteration tasks. The leader focuses on thinking, planning, delegation, progress tracking, and course correction rather than direct execution.",
-  "version": "4.0.0",
-  "tags": ["team", "subagent", "orchestration", "planning", "iteration", "leader", "collaboration", "todo", "retrospective", "lessons-learned", "persistence", "heartbeat", "probe", "dynamic-adjustment"],
+  "description": "Coordinate 2-5 specialized subagents for long-running work when the user explicitly asks for delegation or parallel agent execution. Prefer reusing agents with relevant context, keep ownership specialized, and keep the leader in orchestration mode except for minimal unblock work forced by platform constraints.",
+  "version": "5.8.0",
+  "tags": [
+    "team",
+    "subagent",
+    "orchestration",
+    "specialization",
+    "delegation",
+    "parallelism",
+    "context-reuse",
+    "leader",
+    "continuity",
+    "persistence"
+  ],
   "input_schema": {
-    "goal": "string — end-to-end objective and success criteria",
-    "constraints": "string — time budget, quality bar, scope boundaries, available tools",
-    "available_agents": "string[] — candidate agents with capability descriptions",
-    "milestones": "string[] — checkpoint definitions and expected deliverables per phase",
-    "iteration_budget": "number — maximum iterations before forced convergence"
+    "goal": "string - end-to-end objective and success criteria",
+    "constraints": "string - time budget, quality bar, scope boundaries, available tools",
+    "delegation_authorized": "boolean - true only if the user explicitly asked for subagents, delegation, or parallel agent work",
+    "available_agents": "string[] - candidate agents with capability descriptions and current context ownership",
+    "available_models": "string[] - candidate models with strengths, speed/cost profile, and best-fit task types",
+    "milestones": "string[] - checkpoint definitions and expected deliverables per phase",
+    "iteration_budget": "number - maximum iterations before forced convergence"
   },
-  "lifecycle": ["BOOTSTRAP", "ITERATE", "CONVERGE", "CLOSE"],
-  "iteration_loop": ["PLAN", "DELEGATE", "EXECUTE", "COLLECT", "INTEGRATE", "CORRECT", "RETRO", "PERSIST"],
+  "activation_rules": [
+    "Only use this skill when the user explicitly asks for subagents, delegation, or parallel agent work.",
+    "Plan locally first and map workstreams to specialized owners before spawning.",
+    "Reuse existing agents with relevant context before creating new ones.",
+    "Delegate only bounded, self-contained workstreams that materially help in parallel.",
+    "Give each workstream distinct ownership, especially for files or artifacts that may be edited.",
+    "Prefer 2-3 subagents; expand to 4-5 only when ownership is clearly split.",
+    "Choose a model per subagent based on task difficulty, latency needs, and expected output type.",
+    "Keep the leader focused on orchestration artifacts instead of taking specialist tasks away from active owners.",
+    "If platform rules force local unblock work, keep it minimal and return ownership to the best specialist agent immediately."
+  ],
+  "model_selection_rules": [
+    "Choose a model per subagent based on the work instead of defaulting the whole team to one model.",
+    "Use deeper reasoning models for ambiguous, high-stakes, or integration-heavy work.",
+    "Use faster or smaller models for bounded sidecar tasks, focused inspection, and routine drafting.",
+    "Reuse the current agent and model when the task remains in the same specialty and the model is still a good fit.",
+    "Change models when task shape changes materially, such as from exploration to implementation or from drafting to critical review.",
+    "Record the model choice and rationale in the role charter or dispatch packet.",
+    "Do not up-model out of habit; use the cheapest and fastest model that can reliably clear the quality bar.",
+    "If a subagent reports that the current model is a poor fit, route that concern through the leader and adjust explicitly.",
+    "If a model change materially affects reasoning depth, latency, or expected output quality, refresh the dispatch packet and require a fresh ack."
+  ],
+  "role_model_matrix": [
+    {
+      "role_archetype": "architect / planner",
+      "default_model_posture": "strong reasoning model",
+      "escalate_when": "cross-system ambiguity, risky interfaces, or unclear tradeoffs",
+      "downshift_when": "scope narrows to a bounded rewrite"
+    },
+    {
+      "role_archetype": "builder / worker",
+      "default_model_posture": "balanced coding model",
+      "escalate_when": "integration risk rises or debugging becomes hypothesis-heavy",
+      "downshift_when": "task becomes a mechanical patch in an owned surface"
+    },
+    {
+      "role_archetype": "explorer / analyst",
+      "default_model_posture": "fast smaller model",
+      "escalate_when": "findings are ambiguous or need deeper synthesis",
+      "downshift_when": "task is a narrow lookup or code search pass"
+    },
+    {
+      "role_archetype": "reviewer / tester",
+      "default_model_posture": "strong review-oriented model",
+      "escalate_when": "release risk is high or failures are subtle",
+      "downshift_when": "check is routine and deterministic"
+    },
+    {
+      "role_archetype": "writer / formatter",
+      "default_model_posture": "faster lower-cost model",
+      "escalate_when": "accuracy or policy sensitivity becomes important",
+      "downshift_when": "work remains repetitive formatting or cleanup"
+    }
+  ],
+  "model_selection_heuristics": [
+    "Prefer one model tier below your first instinct unless quality evidence says otherwise.",
+    "Escalate model capability for ambiguity, integration risk, hidden state, or expensive mistakes.",
+    "Downshift model capability for repetitive, narrow, or easily verifiable work.",
+    "When reusing an existing agent, keep both owner and model stable unless there is a clear reason to change one of them."
+  ],
+  "specialization_rules": [
+    "Prefer the agent that already owns the workstream or adjacent context. Reuse beats respawn.",
+    "Reassign only when the current owner is blocked, overloaded, mismatched for the specialty, or an independent review is required.",
+    "Leader-owned artifacts are limited to orchestration state: task board, iteration plan, milestone gates, lessons ledger, and final integration decisions.",
+    "Leader must not absorb specialist tasks just because it sees the whole board.",
+    "If platform rules force local unblock work, keep it minimal and hand ownership back to the best specialist agent immediately.",
+    "Every subagent should know the current milestone and a brief team-wide ownership map, but not receive unnecessary full-history context.",
+    "If a subagent believes another agent is a better owner for part of the work, it raises that recommendation to the leader instead of reassigning work directly."
+  ],
+  "lifecycle": [
+    "BOOTSTRAP",
+    "ITERATE",
+    "CONVERGE",
+    "CLOSE"
+  ],
+  "iteration_loop": [
+    "PLAN",
+    "DELEGATE",
+    "EXECUTE",
+    "COLLECT",
+    "INTEGRATE",
+    "CORRECT",
+    "RETRO",
+    "PERSIST"
+  ],
   "role_charter_template": {
-    "role": "string — role name",
-    "agent": "string — agent identifier",
-    "owns": "string — workstream description",
-    "delivers": "string — concrete output artifacts",
-    "depends_on": "string — other roles or external inputs",
-    "done_when": "string — measurable completion criteria",
-    "must_not": "string — out-of-scope actions to prevent overlap"
+    "role": "string - role name",
+    "agent": "string - agent identifier",
+    "owns": "string - workstream description",
+    "context_advantage": "string - why this agent should own this area now",
+    "model": "string - chosen model",
+    "model_rationale": "string - why this model fits this workstream",
+    "reads": "string - files, artifacts, or context this role may inspect",
+    "writes": "string - owned files, modules, or artifacts; use 'none' for read-only roles",
+    "delivers": "string - concrete output artifacts",
+    "handoff": "string - exact report, patch, artifact, or verdict expected back",
+    "depends_on": "string - other roles or external inputs",
+    "done_when": "string - measurable completion criteria",
+    "must_not": "string - out-of-scope actions to prevent overlap"
+  },
+  "dispatch_packet_template": {
+    "role": "string - role name",
+    "task": "string - concrete assignment",
+    "why_now": "string - why this task matters in this cycle",
+    "milestone_brief": "string - short shared summary of current milestone and project state",
+    "team_snapshot": "string - brief list of which agent owns which surfaces",
+    "why_this_owner": "string - why this agent is the best current owner",
+    "model": "string - chosen model",
+    "why_this_model": "string - why this model fits the task",
+    "inputs": "string - artifacts, references, or context to use",
+    "read_scope": "string - what may be inspected",
+    "write_scope": "string - owned files/modules/artifacts, or 'none'",
+    "do_not_touch": "string - explicit exclusions to avoid overlap",
+    "done_when": "string - measurable completion bar",
+    "report_back_with": "string - patch, summary, verdict, test result, or other required handoff",
+    "heartbeat_interval": "string - every N steps or checkpoints",
+    "deadline_signal": "string - when to report back even if unfinished"
+  },
+  "milestone_brief_template": {
+    "cycle": "number - iteration number",
+    "current_milestone": "string - name or checkpoint",
+    "goal_of_this_cycle": "string - what must move forward now",
+    "what_changed_since_last_cycle": "string - new facts, blockers removed, or scope changes",
+    "critical_path": "string - the dependency chain the team must protect",
+    "team_snapshot": "string[] - short list of agent/role ownership lines",
+    "success_signal": "string - what tells the team this cycle worked"
+  },
+  "ownership_suggestion_template": {
+    "from": "string - role name",
+    "current_task": "string - task currently assigned",
+    "suggested_owner": "string - role name or agent identifier",
+    "reason": "string - why the suggested owner is a better fit",
+    "urgency": "now | this-cycle | next-cycle",
+    "risk_if_unchanged": "string - one-line risk or 'low'"
+  },
+  "owner_map_template": {
+    "surface": "string - work area, file group, or artifact family",
+    "owner": "string - primary owner",
+    "backup": "string - optional backup owner or 'none'",
+    "model": "string - active model for that surface",
+    "source_of_truth": "string - controlling task ID or charter"
+  },
+  "owner_map_rules": [
+    "One surface should have one clear primary owner.",
+    "Surface should describe a concrete work area, file group, or artifact family rather than a vague theme.",
+    "Source_of_truth should point to the controlling task ID or charter.",
+    "Update the owner map immediately after reassignment, split, or close decisions."
+  ],
+  "model_change_suggestion_template": {
+    "from": "string - role name",
+    "current_model": "string - model currently assigned",
+    "suggested_model": "string - replacement model",
+    "reason": "string - why the new model is a better fit",
+    "impact_if_changed": "string - speed / quality / cost tradeoff",
+    "urgency": "now | this-cycle | next-cycle"
+  },
+  "assignment_ack_template": {
+    "role": "string - role name",
+    "task_understood": "string - one-line restatement",
+    "milestone_understood": "string - current milestone in one line",
+    "my_scope": "string - what I own in this assignment",
+    "model_understood": "string - chosen model and why it fits",
+    "out_of_scope": "string - what I will not touch",
+    "dependencies": "string[] | none - short dependency list",
+    "first_step": "string - what I will do first",
+    "concern": "string - none or one-line concern"
+  },
+  "dispatch_state_values": [
+    "planned",
+    "dispatched",
+    "acked",
+    "in-progress",
+    "handoff-submitted",
+    "integrated",
+    "blocked",
+    "cancelled"
+  ],
+  "dispatch_state_rules": [
+    "Create delegated tasks in planned.",
+    "Move to dispatched after the leader sends the dispatch packet.",
+    "Move to acked only after the subagent confirms milestone, scope, model, and first step.",
+    "Move to in-progress only after meaningful execution starts.",
+    "Move to handoff-submitted only when the requested output is actually delivered.",
+    "Use task status in-review while a submitted handoff is being evaluated.",
+    "Move to integrated only after leader review and acceptance.",
+    "If leader requests rework, keep the same task ID, send explicit feedback, return to acked after rework acknowledgement, then back to in-progress when execution resumes.",
+    "Any active state may move to blocked when progress cannot continue.",
+    "Blocked returns to the last active state when the blocker is cleared.",
+    "On task-reassign, the old owner stops, partial output is recorded, ownership is updated, and the task returns to dispatched for the new owner until a fresh ack arrives.",
+    "Leader may cancel any non-integrated task if it is superseded.",
+    "Do not treat dispatched as equivalent to in-progress.",
+    "If a scope or model change invalidates the prior ack, refresh the dispatch packet and require a fresh ack."
+  ],
+  "dispatch_state_record_template": {
+    "task_id": "string - stable task identifier",
+    "owner": "string - current owner",
+    "status": "not-started | in-progress | blocked | in-review | done",
+    "dispatch_state": "planned | dispatched | acked | in-progress | handoff-submitted | integrated | blocked | cancelled",
+    "transition_reason": "string - why the state last changed",
+    "next_action": "string - next expected move"
+  },
+  "iteration_review_checklist": [
+    "Every dispatched task either received an ack or was explicitly cancelled.",
+    "Every acked task has a clear next move: start, block, or cancel.",
+    "Every handoff-submitted task was reviewed and either integrated, sent back for rework, or kept open with a clear reason.",
+    "Every blocked task has an owner, blocker description, and concrete next action.",
+    "Every planned or in-progress task has an explicit disposition before CLOSE: continue, integrate, cancel, or roll forward.",
+    "Every ownership change has a recorded reason.",
+    "Every model change has a recorded reason and expected tradeoff.",
+    "Every active workstream still has exactly one clear owner.",
+    "The task board and owner map still match reality.",
+    "The milestone brief for the next cycle reflects new blockers, completions, and critical-path changes.",
+    "Lessons worth reusing were appended to the lessons ledger."
+  ],
+  "iteration_review_template": {
+    "cycle": "number - iteration number",
+    "ack_gaps": "string[] | none",
+    "handoff_gaps": "string[] | none",
+    "blocked_tasks_with_next_action": "yes | no",
+    "ownership_model_changes_logged": "yes | no",
+    "board_aligned_with_reality": "yes | no",
+    "ready_for_next_cycle": "yes | no"
+  },
+  "minimal_working_example": {
+    "user_goal": "Use subagents to update the skill docs and structured metadata for one feature addition.",
+    "leader_milestone_brief": {
+      "cycle": 1,
+      "current_milestone": "Add one new protocol rule consistently across markdown and JSON",
+      "goal_of_this_cycle": "Update the human doc and machine-readable schema without drift",
+      "what_changed_since_last_cycle": "none",
+      "critical_path": "protocol decision -> markdown update -> JSON alignment -> validation",
+      "team_snapshot": [
+        "Leader owns orchestration, board, owner map, integration, final validation",
+        "Agent-A owns markdown protocol edits",
+        "Agent-B owns JSON alignment and schema drift checks"
+      ],
+      "success_signal": "SKILL.md and skill.json both reflect the same new rule and repo validation passes"
+    },
+    "owner_map": [
+      {
+        "surface": "protocol markdown",
+        "owner": "Agent-A",
+        "backup": "none",
+        "model": "balanced coding model",
+        "source_of_truth": "T1"
+      },
+      {
+        "surface": "skill.json alignment",
+        "owner": "Agent-B",
+        "backup": "none",
+        "model": "fast smaller model",
+        "source_of_truth": "T2"
+      },
+      {
+        "surface": "integration and validation",
+        "owner": "Leader",
+        "backup": "none",
+        "model": "strong reasoning model",
+        "source_of_truth": "T3"
+      }
+    ],
+    "task_board": [
+      {
+        "task_id": "T1",
+        "owner": "Agent-A",
+        "status": "not-started",
+        "dispatch_state": "planned",
+        "transition_reason": "markdown work identified",
+        "next_action": "send dispatch"
+      },
+      {
+        "task_id": "T2",
+        "owner": "Agent-B",
+        "status": "not-started",
+        "dispatch_state": "planned",
+        "transition_reason": "json alignment work identified",
+        "next_action": "send dispatch"
+      },
+      {
+        "task_id": "T3",
+        "owner": "Leader",
+        "status": "not-started",
+        "dispatch_state": "planned",
+        "transition_reason": "integration waits on T1 and T2",
+        "next_action": "prepare review"
+      }
+    ],
+    "dispatch_examples": [
+      {
+        "role": "Markdown Owner",
+        "task": "Update SKILL.md to add the new protocol rule in the correct sections",
+        "model": "balanced coding model",
+        "why_this_model": "This is a bounded doc edit with moderate structure sensitivity"
+      },
+      {
+        "role": "JSON Owner",
+        "task": "Mirror the new protocol rule in skill.json and flag markdown/json drift",
+        "model": "fast smaller model",
+        "why_this_model": "This is a narrow alignment check plus bounded schema update"
+      }
+    ],
+    "assignment_ack_example": {
+      "role": "Markdown Owner",
+      "task_understood": "add the new rule to the relevant markdown protocol sections",
+      "milestone_understood": "keep markdown and JSON aligned for one new rule this cycle",
+      "my_scope": "SKILL.md only",
+      "model_understood": "balanced coding model because this is a bounded structured doc edit",
+      "out_of_scope": "skill.json",
+      "dependencies": [],
+      "first_step": "locate the governing sections and patch the rule in all affected spots",
+      "concern": "none"
+    },
+    "integration_steps": [
+      "Review Agent-A handoff.",
+      "Review Agent-B handoff.",
+      "Reconcile any drift findings.",
+      "Update task board so T1 and T2 are integrated and T3 is in-progress.",
+      "Run bash scripts/validate-skills.sh.",
+      "If validation passes, mark T3 integrated and close the cycle."
+    ]
   },
   "heartbeat_template": {
     "role": "string",
     "cycle": "number",
-    "current_action": "string — what I am doing right now",
-    "sub_progress": "string — X of Y done or percentage",
+    "current_action": "string - what I am doing right now",
+    "sub_progress": "string - X of Y done or percentage",
     "on_track": "yes | drifting | stuck",
     "early_signal": "string | none"
   },
   "probe_template": {
-    "to": "string — role name",
+    "to": "string - role name",
     "reason": "string",
     "questions": "string[]",
     "respond_within": "immediate | next-sub-step-boundary"
   },
-  "adjustment_types": ["priority-shift", "scope-change", "task-reassign", "emergency-stop", "inject-task"],
+  "adjustment_types": [
+    "priority-shift",
+    "scope-change",
+    "task-reassign",
+    "emergency-stop",
+    "inject-task"
+  ],
   "adjustment_template": {
-    "to": "string — role name",
-    "type": "string — one of adjustment_types",
+    "to": "string - role name",
+    "type": "string - one of adjustment_types",
     "reason": "string",
     "details": "string",
     "expected_response": "acknowledge | confirm-new-plan | pause-and-wait"
@@ -53,7 +382,19 @@
     "next": "string",
     "risk": "string"
   },
-  "task_board_statuses": ["not-started", "in-progress", "blocked", "in-review", "done"],
+  "task_board_statuses": [
+    "not-started",
+    "in-progress",
+    "blocked",
+    "in-review",
+    "done"
+  ],
+  "task_board_status_rules": [
+    "Status tracks business progress, while dispatch_state tracks delegation lifecycle.",
+    "For delegated work, maintain both fields instead of collapsing them.",
+    "Status in-review should normally pair with dispatch_state handoff-submitted.",
+    "Status done should normally be used only after dispatch_state integrated or an explicit leader close decision."
+  ],
   "agent_todo_template": {
     "id": "string",
     "task": "string",
@@ -67,7 +408,7 @@
     "task": "string",
     "completed_cycle": "number",
     "outcome": "string",
-    "lesson": "string — optional, fill if task taught something reusable"
+    "lesson": "string - optional, fill if task taught something reusable"
   },
   "retro_report_template": {
     "role": "string",
@@ -80,7 +421,7 @@
   "lessons_ledger_entry": {
     "number": "number",
     "cycle": "number",
-    "source": "string — role name",
+    "source": "string - role name",
     "lesson": "string",
     "action_taken": "string"
   },
@@ -88,73 +429,167 @@
     "Every agent writes state at end of each cycle.",
     "Every agent reads persisted state at start of each cycle.",
     "Leader verifies all agents restored state before dispatching.",
-    "On state loss, leader reconstructs from task board + finished logs + lessons ledger.",
+    "Leader persists the owner map and reuse decisions alongside the task board.",
+    "On state loss, leader reconstructs from task board + owner map + finished logs + lessons ledger.",
     "Use structured formats (tables, JSON) over prose for persisted state."
   ],
   "leader_decision_priority": [
-    "Unblock — resolve stuck subagents first.",
-    "Correct — intervene on drifting workstreams with specific guidance.",
-    "Rebalance — redistribute when idle/overloaded detected.",
-    "Advance — push next highest-priority work item.",
-    "Refine — improve plan quality only when all above are clear."
+    "Unblock - resolve stuck subagents first.",
+    "Preserve continuity - keep work with the best current owner unless there is a concrete reason to reassign.",
+    "Correct - intervene on drifting workstreams with specific guidance.",
+    "Rebalance - redistribute when idle/overloaded detected.",
+    "Advance - push next highest-priority work item.",
+    "Refine - improve plan quality only when all above are clear."
   ],
+  "leader_escalation_policy": {
+    "mandatory_probe_triggers": [
+      "No heartbeat arrives within 2x the expected interval.",
+      "A subagent reports Confidence: low.",
+      "A dependency needed by another active workstream is unclear.",
+      "A heartbeat suggests drift, hidden blocker, or scope creep.",
+      "A task stays dispatched without ack longer than expected for the cycle."
+    ],
+    "mandatory_reassignment_triggers": [
+      "The current owner is blocked for a full cycle without a credible unblock path.",
+      "Another agent clearly has the missing context or specialty.",
+      "The task split created a new surface that deserves its own owner.",
+      "The current owner/model combination is repeatedly failing the quality bar.",
+      "Silence continues after probe and reasonable wait."
+    ],
+    "mandatory_scope_freeze_triggers": [
+      "Critical-path work is slipping and iteration budget is tightening.",
+      "Integration gaps are growing faster than the team is closing them.",
+      "More than one active workstream is blocked on unresolved upstream decisions.",
+      "The team is in converge mode.",
+      "The user changed priorities and the board has not yet been reconciled."
+    ],
+    "escalation_ladder": [
+      "Clarify - answer a question or remove ambiguity.",
+      "Probe - request immediate status.",
+      "Adjust - change priority, scope, or deadline.",
+      "Reassign - move or split ownership.",
+      "Freeze scope - stop new work and protect the critical path.",
+      "Force convergence - close only must-finish items and defer the rest."
+    ],
+    "rules": [
+      "Record the reason for every escalation on the task board or iteration notes.",
+      "If a higher rung is used without lower-rung attempts, the trigger should justify it.",
+      "Repeated escalation on the same workstream should produce a process lesson."
+    ]
+  },
   "leader_anti_patterns": [
-    "Doing execution work directly instead of delegating.",
+    "Spawning agents without explicit user authorization.",
+    "Spawning a new agent when an existing owner already has the right context.",
     "Giving vague instructions like 'make it better'.",
+    "Giving multiple subagents overlapping write ownership.",
+    "Letting the leader take specialist work away from an established owner.",
+    "Treating dispatched as equivalent to in-progress.",
+    "Marking work integrated before reviewing the handoff.",
     "Changing subagent roles mid-iteration without re-charter.",
     "Ignoring low-confidence status reports.",
     "Moving to next iteration before milestone gate passes.",
-    "Skipping retrospective — lessons not recorded are lessons lost.",
-    "Not reading the lessons ledger before planning — repeating past mistakes.",
-    "Letting agents skip todo updates — invisible work creates invisible risk.",
-    "Allowing subagents to go silent during long execution — require heartbeats.",
-    "Issuing adjustments without concrete trigger — anxiety is not a reason.",
-    "Sending a stream of small adjustments — batch when possible."
+    "Reassigning follow-up work to a fresh agent without a concrete reason.",
+    "Skipping retrospective so ownership and process lessons are lost."
+  ],
+  "adjustment_discipline_rules": [
+    "On task-reassign, the current owner must submit a continuity handoff: current state, partial outputs, known risks, and recommended next step for the new owner.",
+    "If an adjustment materially changes scope, read/write boundaries, deliverable, or model, refresh the dispatch packet and require a fresh ack."
   ],
   "failure_recovery": [
-    {"mode": "subagent stuck", "signal": "no progress for 2 cycles", "response": "clarify instructions or reassign task"},
-    {"mode": "quality below bar", "signal": "review fails quality gate", "response": "rework with specific feedback"},
-    {"mode": "scope creep", "signal": "subagent working outside charter", "response": "stop, re-scope, re-delegate"},
-    {"mode": "conflicting outputs", "signal": "integration finds contradictions", "response": "leader decides resolution"},
-    {"mode": "budget near limit", "signal": ">80% budget, <60% done", "response": "force convergence on critical path only"},
-    {"mode": "subagent silent", "signal": "no heartbeat for 2x expected interval", "response": "probe immediately; if no response, reassign task"},
-    {"mode": "mid-execution drift", "signal": "heartbeat shows diverging scope", "response": "issue scope-change adjustment"},
-    {"mode": "priority inversion", "signal": "low-priority work blocking high-priority", "response": "issue priority-shift or task-reassign adjustment"}
+    {
+      "mode": "subagent stuck",
+      "signal": "no progress for 2 cycles",
+      "response": "clarify instructions, unblock, or reassign only if the current owner is no longer the best fit"
+    },
+    {
+      "mode": "quality below bar",
+      "signal": "review fails quality gate",
+      "response": "rework with specific feedback and keep ownership with the same specialist unless independent review is required"
+    },
+    {
+      "mode": "scope creep",
+      "signal": "subagent working outside charter",
+      "response": "stop, re-scope, and restore ownership boundaries"
+    },
+    {
+      "mode": "conflicting outputs",
+      "signal": "integration finds contradictions",
+      "response": "leader resolves conflict and re-establishes single ownership per surface"
+    },
+    {
+      "mode": "budget near limit",
+      "signal": ">80% budget, <60% done",
+      "response": "force convergence on the critical path and preserve the strongest owners"
+    },
+    {
+      "mode": "subagent silent",
+      "signal": "no heartbeat for 2x expected interval",
+      "response": "probe immediately; if no response, reassign with a clear continuity handoff"
+    },
+    {
+      "mode": "mid-execution drift",
+      "signal": "heartbeat shows diverging scope",
+      "response": "issue scope-change adjustment with explicit ownership reset"
+    },
+    {
+      "mode": "priority inversion",
+      "signal": "low-priority work blocking high-priority",
+      "response": "issue priority-shift or task-reassign adjustment while preserving specialization where possible"
+    },
+    {
+      "mode": "context churn",
+      "signal": "fresh agent is being considered for follow-up work already owned elsewhere",
+      "response": "default back to the current owner unless a clear specialty or review reason justifies the switch"
+    }
   ],
   "context_management": [
     "Summarize completed work as compact artifacts, not raw conversation.",
-    "Pass only relevant context per dispatch — not entire history.",
-    "Use task board as single source of truth.",
-    "Archive completed workstreams, carry forward only residual items.",
-    "Persist lessons ledger separately — do not inline into dispatch messages."
+    "Pass only relevant context per dispatch, not entire history.",
+    "Use the task board and owner map as the single source of truth.",
+    "Reuse existing agent summaries instead of re-explaining the same workstream to fresh agents.",
+    "Share a concise milestone brief and team snapshot with every delegated agent so they know the project state without loading full history.",
+    "Archive completed workstreams and carry forward only residual items.",
+    "Persist lessons ledger separately; do not inline it into every dispatch message."
   ],
   "instructions": [
-    "BOOTSTRAP: Decompose goal into 3-5 parallel workstreams with clear boundaries.",
-    "BOOTSTRAP: Assign one subagent per workstream using the role charter template.",
-    "BOOTSTRAP: Initialize shared task board, all agent todo/done logs, and empty lessons ledger.",
-    "ITERATE/PLAN: Leader reviews task board and assigns work units with scope, inputs, done criteria, and deadline signal.",
-    "ITERATE/DELEGATE: Dispatch instructions telling each subagent exactly what to do, what NOT to do, and when to report back.",
-    "ITERATE/EXECUTE: Subagents work within role boundary, send heartbeats at specified intervals, respond to probes, and accept dynamic adjustments.",
-    "ITERATE/COLLECT: Leader gathers status reports, reviews heartbeats, probes silent or drifting agents, and acts on low-confidence or blocked items immediately.",
-    "ITERATE/INTEGRATE: Leader merges outputs, resolves conflicts, updates task board.",
-    "ITERATE/CORRECT: Leader evaluates drift and decides: continue, rebalance, rework, re-scope, or issue dynamic adjustments to in-flight subagents.",
-    "ITERATE/RETRO: Collect per-cycle retro from each subagent, update lessons ledger, adjust next plan.",
-    "ITERATE/PERSIST: All agents write current todo, done log, and retro state to persistent storage.",
-    "CONVERGE: Run final quality checks, collect self-assessments, fix integration gaps. No new scope.",
-    "CLOSE: Produce integrated output, write project-level retrospective, document residual risks, write next-iteration backlog, archive all state (task board, agent logs, lessons ledger)."
+    "BOOTSTRAP: Confirm delegation is explicitly authorized and worth the overhead.",
+    "BOOTSTRAP: Build a local plan and map each workstream to the best specialized owner.",
+    "BOOTSTRAP: Reuse existing agents where context continuity is valuable; spawn new agents only for clearly new workstreams.",
+    "BOOTSTRAP: Decompose the remaining work into 2-5 parallel workstreams with clear boundaries.",
+    "BOOTSTRAP: Choose the best-fit model for each workstream before dispatch.",
+    "BOOTSTRAP: Assign one subagent per workstream using the role charter template with context advantage, model choice, and explicit read/write ownership.",
+    "BOOTSTRAP: Initialize the shared task board, owner map, all agent todo/done logs, and the lessons ledger.",
+    "ITERATE/PLAN: Keep orchestration local and route each work item to the agent with the strongest context and narrowest fit.",
+    "ITERATE/DELEGATE: Send dispatch packets with a concise milestone brief, team snapshot, exact task, why-this-owner rationale, chosen model, model rationale, read scope, write scope, handoff format, and what not to touch.",
+    "ITERATE/DELEGATE: Require a brief assignment acknowledgement so each subagent confirms the milestone, scope boundary, chosen model, and first step before meaningful execution.",
+    "ITERATE/DELEGATE: Track delegated tasks through the explicit dispatch state machine instead of inferring progress from message traffic.",
+    "ITERATE/EXECUTE: Subagents work within role boundary, send heartbeats, respond to probes, and accept dynamic adjustments while the leader manages progress, ownership, and integration.",
+    "ITERATE/EXECUTE: If a subagent sees that its assigned model is materially wrong for the task, it raises a model change suggestion through the leader instead of switching silently.",
+    "ITERATE/COLLECT: Gather status when the next decision depends on it; act immediately on blocked, low-confidence, or silent owners.",
+    "ITERATE/INTEGRATE: Merge outputs, resolve conflicts, update the task board, and preserve single ownership per surface.",
+    "ITERATE/CORRECT: Evaluate drift and decide whether to continue, rebalance, rework, re-scope, or reassign with an explicit continuity reason. Subagent ownership suggestions flow through the leader.",
+    "ITERATE/REVIEW: Before advancing, run the iteration review checklist so ack gaps, handoff gaps, blocked tasks, and owner/model changes are explicitly reconciled.",
+    "ITERATE/RETRO: Collect per-cycle retro from each subagent, update the lessons ledger, and turn repeated ownership lessons into standing rules.",
+    "ITERATE/PERSIST: All agents write current todo, done log, retro state, and owner decisions to persistent storage.",
+    "CONVERGE: Run final quality checks, collect self-assessments, fix integration gaps, and accept no new scope.",
+    "CLOSE: Produce integrated output, write project-level retrospective, document residual risks, write next-iteration backlog, and archive all state."
   ],
   "examples": [
     {
       "input": "Migrate monolith to microservices across 6 iterations.",
-      "output": "Leader assigns 4 subagents: Architect (service boundaries, API contracts), Builder (migration per service), Tester (integration tests, benchmarks), Ops (pipeline, canary). Iteration 1: Architect defines contracts, Tester prepares harness, Ops sets up staging. Iteration 3 correction: Tester reports coverage gap on payment service → Leader pauses Builder's next module, redirects to payment tests first."
+      "output": "Leader reuses the Architect for follow-up contract changes, keeps Builder on implementation surfaces it already touched, and routes new staging tasks to Ops. When Tester finds a payment coverage gap, the leader preserves specialization: Tester owns gap validation, Architect clarifies edge cases, Builder waits for the corrected contract instead of the leader taking over implementation."
     },
     {
       "input": "Rewrite all user-facing docs for product rebrand.",
-      "output": "Leader assigns 3 subagents: Writer (draft per section), Reviewer (accuracy & style), Asset Creator (diagrams, screenshots). Leader prioritizes top-traffic pages, gates each batch before publish, runs parallel draft + asset creation."
+      "output": "Leader keeps only sequencing, consistency review, and sign-off. Writer continues owning draft edits across cycles, Reviewer stays on accuracy and style, and Asset Creator stays on diagrams and screenshots. Follow-up revisions go back to the same owners instead of bouncing between fresh agents."
     },
     {
       "input": "Diagnose and fix an intermittent production crash.",
-      "output": "Leader assigns 3 subagents: Log Analyst (pattern identification), Code Inspector (trace suspicious paths), Reproducer (build minimal repro). Leader manages hypothesis list, dispatches parallel evidence gathering, eliminates hypotheses per cycle, narrows until root cause confirmed."
+      "output": "Leader manages the hypothesis board and evidence synthesis. Log Analyst keeps log-pattern follow-ups, Code Inspector keeps suspicious-path tracing, and Reproducer keeps the minimal repro. The leader does not jump into one of those workstreams just because it has the whole picture."
+    },
+    {
+      "input": "Upgrade a shared library across a large repo without stalling the team.",
+      "output": "Leader keeps orchestration only: owner map, milestone gates, and integration decisions. A pre-existing upgrade agent keeps dependency changes, a test auditor agent keeps failing surface analysis, and a docs agent keeps migration notes. If the platform forces a tiny local unblock, the leader immediately hands ownership back to the best specialist agent."
     }
   ]
 }
