@@ -1,0 +1,31 @@
+{
+  "id": "local-repo-development",
+  "title": "Local Repo Development",
+  "description": "Follow a local repository development workflow with git worktree setup, pre-commit code review, and sensitive information scanning.",
+  "version": "1.0.0",
+  "tags": ["git", "worktree", "local-development", "code-review", "secret-scanning", "commit-workflow", "ci-cd"],
+  "input_schema": {
+    "feature_name": "string — short feature, fix, or task name used to identify the worktree and branch",
+    "repo_path": "string — local repository path, usually the current working directory",
+    "commit_intent": "string — optional summary of the changes that should be committed",
+    "mr_url": "string — optional merge request or pull request URL created for the work"
+  },
+  "instructions": [
+    "Confirm the current directory is inside a git repository with git rev-parse --show-toplevel; if not, ask for the repository path.",
+    "Before editing, inspect git worktree list --porcelain and git rev-parse --git-dir to determine whether the current checkout is already a suitable linked worktree for the task.",
+    "If not in a suitable linked worktree, derive a kebab-case slug from the feature name and create a sibling worktree from origin/main, then origin/master, then local main/master, then HEAD.",
+    "Create a branch such as feature/<slug> or fix/<slug> and use a non-destructive unique path if the preferred branch or path already exists.",
+    "Never discard existing user changes; work around unrelated dirty files and ask only when they block the task.",
+    "Implement the requested change using the repository's existing build, style, and test conventions.",
+    "Before committing, perform a code review pass over git diff HEAD or the staged diff and fix material findings.",
+    "Before committing, scan local repository changes for sensitive information with gitleaks, detect-secrets, or a focused fallback scan; never print secret values.",
+    "Stage only intentional files and commit only after code review and sensitive information scan pass, or explicitly state any gate that could not be run.",
+    "After submitting a merge request or pull request, asynchronously track CI/CD until it passes, fails, or is canceled; inspect failing job logs and fix in-scope failures."
+  ],
+  "examples": [
+    {
+      "input": "Add a dashboard filter feature in /repo/app.",
+      "output": "Confirmed current checkout was not a linked worktree, created ../app-dashboard-filter from origin/main on branch feature/dashboard-filter, implemented the change, reviewed the diff, ran a secret scan, committed only the intended files, opened an MR, and asynchronously monitored CI/CD until the pipeline passed."
+    }
+  ]
+}
