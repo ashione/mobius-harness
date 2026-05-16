@@ -96,3 +96,19 @@ description: <one-line description>
 - 普通 skill 不需要这些字段，只用必需字段即可。
 - 扩展字段必须在 SKILL.md 中有对应的人类可读说明。
 - `additionalProperties: true` — skill.json 允许任意额外字段。
+
+## Mobius Harness
+
+`mobius-harness` 是本仓库的总控交付 skill，用于从需求分析到交付报告编排其他专业 skills。它不是用于测试本仓库的工具。
+
+长任务可在本地维护执行产物：
+
+```text
+.delivery/runs/<run-id>/
+  requirements.md
+  plan.md
+  verification.md
+  delivery-report.md
+```
+
+详见 [HARNESS.md](HARNESS.md)。
