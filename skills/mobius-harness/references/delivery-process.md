@@ -73,6 +73,17 @@ Gate rules:
 - An exception must identify who or what accepted the risk: a user decision, repository instruction, documented policy, or explicit out-of-scope rationale.
 - For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before the final report when the script exists. Record failure output in Failure List and do not complete the delivery until it passes or is explicitly excepted.
 
+### Hook Enforcement Standard
+
+Hooks are required controls inside phase gates for Standard and Strict deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Codex-specific evidence rules, and executable hook safety.
+
+Hook rules:
+
+- A phase or subphase cannot be marked `complete` while any related hook is `blocked`.
+- A hook row must include hook id, trigger, required action, status, evidence pointer, and failure handling when relevant.
+- Missing skill activation evidence, missing tool reality evidence, skipped diff review, skipped sensitive scan, unobserved CI/CD, missing cleanup evidence, or missing local runtime sync is `blocked` until converted to `not-applicable` or `exception` with evidence.
+- Executable repository hooks are optional; they require an explicit Dependency Decision and fail closed to `blocked`.
+
 Large, risky, or blocked phases must be split into subphases. A subphase uses the same status record format as a phase, but with a narrower goal and checklist.
 
 Recommended subphase naming:
@@ -107,6 +118,7 @@ Every phase and subphase must record state with these sections:
 - `Goal`: the concrete outcome this phase or subphase must achieve.
 - `Checklist`: objective checks required to exit this phase or subphase.
 - `Gate Ledger`: gate id, required evidence, status, evidence pointer, and exception detail.
+- `Hook Ledger`: hook id, trigger, required action, status, evidence pointer, and failure handling.
 - `Todo List`: unfinished actions, preferably with status such as `todo`, `doing`, `blocked`, or `done`.
 - `Failure List`: failed commands, blocked checks, rejected assumptions, CI/CD failures, defects found during review, or unresolved risks.
 - `Change List`: decisions made, files changed, requirement changes, scope changes, validation changes, or follow-up changes.
@@ -146,6 +158,11 @@ Evidence: <commands, files, links, PR/MR, CI/CD, or reason unavailable>
 ### Gate Ledger
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
+|---|---|---|---|---|---|
+
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
 
 ### Todo List

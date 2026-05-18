@@ -70,4 +70,25 @@ missing_release_report="$(copy_passing_fixture missing-release-report)"
 perl -0pi -e 's/\n## Version or Release Report\n\nreason:fixture has no versioned release\.\n//' "${missing_release_report}/delivery-report.md"
 expect_failure "${missing_release_report}" "delivery-report.md missing marker: ## Version or Release Report"
 
+missing_hook_ledger="$(copy_passing_fixture missing-hook-ledger)"
+perl -0pi -e 's/\n### Hook Ledger\n\n\| Hook \| Trigger \| Required Action \| Status \| Evidence \| Failure Handling \|\n\|---\|---\|---\|---\|---\|---\|\n\| before_plan \|[^\n]*\n//' "${missing_hook_ledger}/plan.md"
+expect_failure "${missing_hook_ledger}" "plan.md missing marker: ### Hook Ledger"
+
+blocked_hook="$(copy_passing_fixture blocked-hook)"
+perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | Run or record local validation, diff review, and sensitive information scan. | blocked | reason:intentional hook blocker | |/' "${blocked_hook}/verification.md"
+expect_failure "${blocked_hook}" "verification.md hook before_commit is blocked"
+
+misplaced_hook="$(copy_passing_fixture misplaced-hook)"
+perl -0pi -e 's/\n\| before_plan \|[^\n]*\n//' "${misplaced_hook}/plan.md"
+cat >> "${misplaced_hook}/requirements.md" <<'MISPLACED_HOOK'
+| before_plan | before G2 completion | Misplaced hook row used to prove artifact ownership. | pass | decision:misplaced | |
+MISPLACED_HOOK
+expect_failure "${misplaced_hook}" "requirements.md has misplaced hook id: before_plan"
+
+duplicate_hook="$(copy_passing_fixture duplicate-hook)"
+cat >> "${duplicate_hook}/plan.md" <<'DUPLICATE_HOOK'
+| before_plan | before G2 completion | Duplicate hook row used to prove package-level uniqueness. | pass | decision:duplicate | |
+DUPLICATE_HOOK
+expect_failure "${duplicate_hook}" "plan.md hook before_plan appears more than once"
+
 echo "Delivery run validator regression tests passed."

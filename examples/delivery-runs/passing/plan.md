@@ -27,6 +27,12 @@ Show a fully satisfied plan gate.
 |---|---|---|---|---|---|
 | G2 | plan | Repo findings, affected areas, specialist skills, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/passing/plan.md | |
 
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_plan | before G2 completion | Record skill activation, tool reality, Dependency Decision, implementation path, validation strategy, and writing-plans decision. | pass | file:examples/delivery-runs/passing/plan.md | |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |

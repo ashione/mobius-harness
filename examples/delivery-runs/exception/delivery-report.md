@@ -26,6 +26,12 @@ Show a complete report gate for an exception fixture.
 |---|---|---|---|---|---|
 | G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, risks, follow-ups, and release notes. | pass | file:examples/delivery-runs/exception/delivery-report.md | |
 
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_final | before final delivery report | Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report. | pass | file:examples/delivery-runs/exception/delivery-report.md | |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |

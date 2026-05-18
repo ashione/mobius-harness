@@ -30,6 +30,12 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 |---|---|---|---|---|---|
 | G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, and brainstorming decision are explicit. | blocked | <evidence pointer> | <required if exception> |
 
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_requirements | before G1 completion | Read user goal, repo instructions, relevant specs/docs, and record brainstorming decision. | blocked | <evidence pointer> | <required if exception> |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |
@@ -95,6 +101,12 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 | G2 | plan | Repo findings, affected areas, specialist skills, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
+
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_plan | before G2 completion | Record skill activation, tool reality, Dependency Decision, implementation path, validation strategy, and writing-plans decision. | blocked | <evidence pointer> | <required if exception> |
 
 ### Todo List
 
@@ -172,6 +184,16 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 | G6 | pr-mr | PR/MR URL or not-applicable reason is recorded. | blocked | <evidence pointer> | <required if exception> |
 | G7 | ci-cd | Terminal CI/CD state or not-applicable reason is recorded. | blocked | <evidence pointer> | <required if exception> |
 
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_edit | before editing files | Confirm repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes. | blocked | <evidence pointer> | <required if exception> |
+| after_edit | after editing files | Map changed files to acceptance criteria and check for unintended churn. | blocked | <evidence pointer> | <required if exception> |
+| before_commit | before commit or PR/MR preparation | Run or record local validation, diff review, and sensitive information scan. | blocked | <evidence pointer> | <required if exception> |
+| before_pr | before PR/MR creation or not-applicable decision | Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created. | blocked | <evidence pointer> | <required if exception> |
+| after_pr | after PR/MR creation or not-applicable decision | Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up. | blocked | <evidence pointer> | <required if exception> |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |
@@ -241,6 +263,12 @@ Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavail
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 | G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, risks, follow-ups, and version or release report notes. | blocked | <evidence pointer> | <required if exception> |
+
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_final | before final delivery report | Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report. | blocked | <evidence pointer> | <required if exception> |
 
 ### Todo List
 

@@ -36,6 +36,7 @@ Detailed standards live with the `mobius-harness` skill so agents can load only 
 
 - [delivery-process.md](../skills/mobius-harness/references/delivery-process.md): trigger rules, modes, phase gates, status records, subphases, blockers, and change control.
 - [artifact-interface.md](../skills/mobius-harness/references/artifact-interface.md): Delivery Episode Package layout, required sections, and evidence format.
+- [hook-policy.md](../skills/mobius-harness/references/hook-policy.md): Codex-oriented hook triggers, required hook evidence, failure handling, and executable hook safety.
 - [artifact-templates.md](../skills/mobius-harness/references/artifact-templates.md): canonical Markdown templates for persisted delivery artifacts.
 - [governance-and-reporting.md](../skills/mobius-harness/references/governance-and-reporting.md): specialist skill matrix, definition of done, safety boundaries, PR/MR body, version report, resume protocol, and borrowed principles.
 
@@ -47,6 +48,7 @@ Mobius Harness must:
 - follow ordered blocking gates from requirements to final report,
 - split large, risky, or blocked work into subphases,
 - maintain Goal, Checklist, Gate Ledger, Todo List, Failure List, and Change List for each phase or subphase,
+- maintain a Hook Ledger for Standard and Strict deliveries so Codex-specific controls are evidenced before risky transitions,
 - record Superpowers spec/plan artifacts or fallback decisions when those skills are used or unavailable,
 - record a Dependency Decision before implementation,
 - require evidence before marking any phase or delivery complete,
@@ -74,8 +76,8 @@ Mobius Harness can apply other skills as needed:
 
 Mobius Harness should not consider a delivery complete until it has clarified high-impact ambiguity, inspected the repository, followed the local repository workflow, run relevant validation, reviewed the diff, scanned for sensitive information, recorded PR/MR and CI/CD state when applicable, and produced a delivery report.
 
-For Standard and Strict deliveries, the Delivery Episode Package must contain terminal Gate Ledger rows for `G1` through `G8`: `pass`, `not-applicable`, or `exception`. Any `blocked` gate means the delivery is not complete.
+For Standard and Strict deliveries, the Delivery Episode Package must contain terminal Gate Ledger rows for `G1` through `G8` and terminal Hook Ledger rows for the required hooks in `hook-policy.md`: `pass`, `not-applicable`, or `exception`. Any `blocked` gate or hook means the delivery is not complete.
 
 Committed fixtures under `examples/delivery-runs/` demonstrate passing, accepted-exception, and blocked delivery packages. CI runs the validator regression script against those fixtures and generated negative cases so gate behavior remains executable.
 
-Behavior pressure scenarios live in `examples/pressure-scenarios/mobius-harness.md`. Use them to check whether an agent actually stops at missing requirements, missing plans, blocked gates, and unmirrored exceptions.
+Behavior pressure scenarios live in `examples/pressure-scenarios/mobius-harness.md`. Use them to check whether an agent actually stops at missing requirements, missing plans, blocked gates, blocked hooks, unsupported completion claims, and unmirrored exceptions.

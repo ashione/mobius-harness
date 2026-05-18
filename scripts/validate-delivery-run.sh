@@ -9,10 +9,11 @@ fi
 run_dir="$1"
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 gate_list_file="$(mktemp)"
+hook_list_file="$(mktemp)"
 
 # shellcheck disable=SC2317
 cleanup() {
-  rm -f "${gate_list_file}"
+  rm -f "${gate_list_file}" "${hook_list_file}"
 }
 trap cleanup EXIT
 
@@ -29,6 +30,16 @@ required_files=(
 )
 
 required_gates=(G1 G2 G3 G4 G5 G6 G7 G8)
+required_hooks=(
+  before_requirements
+  before_plan
+  before_edit
+  after_edit
+  before_commit
+  before_pr
+  after_pr
+  before_final
+)
 valid_statuses=" draft active blocked complete deferred "
 
 status=0
@@ -185,6 +196,32 @@ is_required_gate() {
   esac
 }
 
+is_required_hook() {
+  local hook="$1"
+
+  case " ${required_hooks[*]} " in
+    *" ${hook} "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_expected_hook_for_file() {
+  local file="$1"
+  local hook="$2"
+
+  case "${file}:${hook}" in
+    requirements.md:before_requirements) return 0 ;;
+    plan.md:before_plan) return 0 ;;
+    verification.md:before_edit) return 0 ;;
+    verification.md:after_edit) return 0 ;;
+    verification.md:before_commit) return 0 ;;
+    verification.md:before_pr) return 0 ;;
+    verification.md:after_pr) return 0 ;;
+    delivery-report.md:before_final) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 for file in "${required_files[@]}"; do
   path="${run_dir}/${file}"
 
@@ -194,7 +231,7 @@ for file in "${required_files[@]}"; do
     continue
   fi
 
-  for marker in "Status:" "Phase:" "Updated:" "Evidence:" "## Phase State" "### Goal" "### Checklist" "### Gate Ledger" "### Todo List" "### Failure List" "### Change List"; do
+  for marker in "Status:" "Phase:" "Updated:" "Evidence:" "## Phase State" "### Goal" "### Checklist" "### Gate Ledger" "### Hook Ledger" "### Todo List" "### Failure List" "### Change List"; do
     require_marker "${path}" "${file}" "${marker}"
   done
 
@@ -313,6 +350,101 @@ for file in "${required_files[@]}"; do
     status=1
   fi
 
+  if ! awk -F'|' -v file="${file}" '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^### Failure List/ {
+      section = "failure"
+      next
+    }
+
+    /^### Change List/ {
+      section = "change"
+      next
+    }
+
+    /^### / {
+      section = ""
+    }
+
+    section == "failure" && /^\|/ {
+      for (hook in exception_hook) {
+        if ($0 ~ hook) {
+          failure_has[hook] = 1
+        }
+      }
+    }
+
+    section == "change" && /^\|/ {
+      for (hook in exception_hook) {
+        if ($0 ~ hook) {
+          change_has[hook] = 1
+        }
+      }
+    }
+
+    /^\|[ \t]*(before|after)_[a-z_]+[ \t]*\|/ {
+      hook = trim($2)
+      status_value = trim($5)
+      evidence = trim($6)
+      failure_handling = trim($7)
+
+      if (seen_hook[hook]) {
+        printf("ERROR: %s hook %s appears more than once\n", file, hook)
+        invalid = 1
+      }
+      seen_hook[hook] = 1
+
+      if (status_value != "pass" && status_value != "not-applicable" && status_value != "exception" && status_value != "blocked") {
+        printf("ERROR: %s hook %s has invalid status: %s\n", file, hook, status_value)
+        invalid = 1
+      }
+
+      if (status_value == "blocked") {
+        printf("ERROR: %s hook %s is blocked\n", file, hook)
+        invalid = 1
+      }
+
+      if (evidence == "" || evidence ~ /^<.*>$/) {
+        printf("ERROR: %s hook %s missing evidence\n", file, hook)
+        invalid = 1
+      }
+
+      if (evidence !~ /^(cmd|file|url|decision|reason):/) {
+        printf("ERROR: %s hook %s evidence must start with cmd:, file:, url:, decision:, or reason:\n", file, hook)
+        invalid = 1
+      }
+
+      if (status_value == "exception" && (failure_handling == "" || failure_handling ~ /^<.*>$/)) {
+        printf("ERROR: %s hook %s exception missing failure handling\n", file, hook)
+        invalid = 1
+      }
+
+      if (status_value == "exception") {
+        exception_hook[hook] = 1
+      }
+    }
+
+    END {
+      for (hook in exception_hook) {
+        if (!failure_has[hook]) {
+          printf("ERROR: %s hook %s exception not recorded in Failure List\n", file, hook)
+          invalid = 1
+        }
+        if (!change_has[hook]) {
+          printf("ERROR: %s hook %s exception not recorded in Change List\n", file, hook)
+          invalid = 1
+        }
+      }
+      exit invalid ? 1 : 0
+    }
+  ' "${path}"; then
+    status=1
+  fi
+
   while IFS=$'\t' read -r gate evidence; do
     [[ -n "${gate}" ]] || continue
 
@@ -345,6 +477,42 @@ for file in "${required_files[@]}"; do
       print trim($2) "\t" trim($6)
     }
   ' "${path}")
+
+  while IFS=$'\t' read -r hook evidence; do
+    [[ -n "${hook}" ]] || continue
+
+    if [[ "${evidence}" == file:* ]]; then
+      evidence_path="${evidence#file:}"
+      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${run_dir}/${evidence_path}" ]]; then
+        echo "ERROR: ${file} hook ${hook} file evidence not found: ${evidence_path}"
+        status=1
+      fi
+    elif [[ "${evidence}" == url:* ]]; then
+      evidence_url="${evidence#url:}"
+      if [[ ! "${evidence_url}" =~ ^https?:// ]]; then
+        echo "ERROR: ${file} hook ${hook} URL evidence must start with http:// or https://"
+        status=1
+      fi
+    fi
+
+    if ! is_required_hook "${hook}"; then
+      echo "ERROR: ${file} has unexpected hook id: ${hook}"
+      status=1
+    elif ! is_expected_hook_for_file "${file}" "${hook}"; then
+      echo "ERROR: ${file} has misplaced hook id: ${hook}"
+      status=1
+    fi
+    printf '%s\n' "${hook}" >> "${hook_list_file}"
+  done < <(awk -F'|' '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^\|[ \t]*(before|after)_[a-z_]+[ \t]*\|/ {
+      print trim($2) "\t" trim($6)
+    }
+  ' "${path}")
 done
 
 for gate in "${required_gates[@]}"; do
@@ -358,8 +526,19 @@ for gate in "${required_gates[@]}"; do
   fi
 done
 
+for hook in "${required_hooks[@]}"; do
+  hook_count="$(grep -c -E "^${hook}$" "${hook_list_file}" || true)"
+  if [[ "${hook_count}" -eq 0 ]]; then
+    echo "ERROR: missing Hook Ledger row for ${hook}"
+    status=1
+  elif [[ "${hook_count}" -gt 1 ]]; then
+    echo "ERROR: Hook Ledger row for ${hook} appears more than once in delivery run"
+    status=1
+  fi
+done
+
 if [[ "${status}" -eq 0 ]]; then
-  echo "Delivery run gates validated successfully."
+  echo "Delivery run gates and hooks validated successfully."
 fi
 
 exit "${status}"

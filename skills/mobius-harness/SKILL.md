@@ -21,6 +21,7 @@ Load references only when needed:
 
 - `references/delivery-process.md`: read when choosing mode, managing phases/subphases, status records, blockers, or change control.
 - `references/artifact-interface.md`: read when defining `.delivery/runs/<run-id>/` files, required sections, or evidence records.
+- `references/hook-policy.md`: read when applying Codex-specific hook controls around skills, tools, worktrees, review, CI/CD, cleanup, or local runtime sync.
 - `references/artifact-templates.md`: read only when a persisted artifact needs a canonical Markdown template.
 - `references/governance-and-reporting.md`: read when selecting specialist skills, deciding completion, writing PR/MR or release reports, resuming delivery, or handling safety boundaries.
 
@@ -36,6 +37,8 @@ Load references only when needed:
 1. Treat Mobius Harness as the primary entrypoint for end-to-end delivery work. Keep one agent accountable for the whole loop unless the user explicitly asks for delegation.
 2. Select `Lightweight`, `Standard`, or `Strict` mode at the start. Use persisted `.delivery/runs/<run-id>/` artifacts for Standard and Strict work.
 3. Follow the delivery process in order. Treat each phase gate as a blocking gate, not as a reminder. Do not move to the next phase until the current gate is `pass`, `not-applicable`, or an explicitly recorded `exception`.
+   - For Standard and Strict deliveries, maintain a Hook Ledger for required hook controls from `references/hook-policy.md`.
+   - Treat `blocked` hooks like `blocked` gates; do not advance until they pass, become not applicable, or are explicitly excepted.
 4. Analyze requirements first:
    - Restate the goal, background, success criteria, scope, non-goals, risks, and open questions.
    - Use `superpowers:brainstorming` before creative work, behavior design, feature shaping, or ambiguous requirement decisions; record whether it was used, not applicable, or blocked.
@@ -86,12 +89,18 @@ Every phase/subphase must maintain a Gate Ledger with:
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 
+For Standard and Strict deliveries, every phase/subphase must also maintain a Hook Ledger:
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+
 Before moving phases, answer the gate decision in the ledger:
 
 1. What exact evidence proves this gate is satisfied?
 2. If evidence is missing, is it unavailable, not applicable, or a true blocker?
 3. If using an exception, where is the accepted risk recorded?
 4. What unfinished Todo List or Failure List items carry forward?
+5. Which hooks were triggered for this phase, and what evidence proves each hook ran or was not applicable?
 
 For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before marking the delivery complete when that script exists in the repository. If the script is unavailable, record that as a gate exception with reason.
 
@@ -113,6 +122,7 @@ For every phase and subphase, maintain a status record with:
 - Goal: what this phase or subphase must achieve.
 - Checklist: objective exit checks for the phase or subphase.
 - Gate Ledger: phase gate decisions with status and evidence.
+- Hook Ledger: Codex-specific controls for skill activation, tool reality, worktree hygiene, review, CI/CD, cleanup, and local runtime sync.
 - Todo List: remaining actions, each with owner or status when useful.
 - Failure List: failed commands, blocked checks, rejected assumptions, CI/CD failures, or unresolved risks.
 - Change List: decisions made, files changed, scope changes, requirement changes, validation changes, or follow-up changes.
@@ -121,10 +131,12 @@ For every phase and subphase, maintain a status record with:
 
 - A phase is complete only when every checklist item has evidence or an explicit unavailable reason.
 - A phase cannot be `complete` while its Gate Ledger has any `blocked` row.
+- A Standard or Strict phase cannot be `complete` while any required Hook Ledger row is `blocked` or missing.
 - Requirements and plan phases must record whether `superpowers:brainstorming` and `superpowers:writing-plans` were used, skipped as not applicable, unavailable, or excepted with accepted risk.
 - Plan phases must record Dependency Decision, including evidence and fallback for unavailable tooling or platform skills.
 - A delivery is complete only when requirements, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported.
 - A delivery cannot be `complete` until gates `G1` through `G8` are `pass`, `not-applicable`, or `exception`.
+- A Standard or Strict delivery cannot be `complete` until required hooks from `hook-policy.md` are `pass`, `not-applicable`, or `exception`.
 - For Standard and Strict mode, persisted artifacts must be enough for another agent to resume without relying on conversation memory.
 - Do not collapse requirements, planning, implementation, and verification into a single vague status update.
 - Do not ask the user for decisions that can be answered by reading the repository or running safe local commands.
@@ -144,7 +156,7 @@ For long or risky work, maintain `.delivery/runs/<run-id>/` as a Delivery Episod
 - `verification.md`: Commands run, outcomes, local failures and fixes, diff review notes, sensitive information scan result, PR/MR URL, and CI/CD runs.
 - `delivery-report.md`: Executive summary, changed files, implementation summary, validation summary, PR/MR and CI/CD status, risks, follow-ups, release notes, and version or release report notes when applicable.
 
-Each artifact must include status, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
+Each artifact must include status, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Hook Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Hook Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
 
 When resuming, read the Delivery Episode Package first, identify the earliest incomplete phase or subphase, review Todo List, Failure List, and Change List, confirm git state, and continue from the first unmet gate.
 

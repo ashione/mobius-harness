@@ -25,6 +25,12 @@ Show a blocked requirements gate that the validator must reject.
 |---|---|---|---|---|---|
 | G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, and brainstorming decision are explicit. | blocked | decision:fixture intentionally blocks G1 | |
 
+### Hook Ledger
+
+| Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
+|---|---|---|---|---|---|
+| before_requirements | before G1 completion | Read user goal, repo instructions, relevant specs/docs, and record brainstorming decision. | pass | decision:fixed fixture requirements reviewed | |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |
