@@ -59,7 +59,13 @@
 
 `.delivery/runs/` 默认不提交到 git。
 
-交付过程必须遵循 Mobius Harness 的阶段门禁。任务开始时选择 `Lightweight`、`Standard` 或 `Strict` 模式；大任务可拆成子阶段。每个阶段和子阶段都必须记录 Goal、Checklist、Todo List、Failure List 和 Change List。任何 complete 状态都必须有 evidence。交付产物必须遵循 [docs/HARNESS.md](docs/HARNESS.md) 中的 artifact 标准。
+交付过程必须遵循 Mobius Harness 的阻塞式阶段门禁。任务开始时选择 `Lightweight`、`Standard` 或 `Strict` 模式；大任务可拆成子阶段。每个阶段和子阶段都必须记录 Goal、Checklist、Gate Ledger、Todo List、Failure List 和 Change List。任何 complete 状态都必须有 evidence，且不能存在 `blocked` gate。交付产物必须遵循 [docs/HARNESS.md](docs/HARNESS.md) 中的 artifact 标准。
+
+如果使用 `.delivery/runs/<run-id>/`，完成前运行：
+
+```bash
+bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>
+```
 
 如果交付被中断，后续 agent 应先读取 `.delivery/runs/<run-id>/`，找到最早未完成的阶段或子阶段，再基于 Todo List、Failure List、Change List 和当前 git 状态继续执行。
 
