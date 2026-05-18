@@ -65,6 +65,8 @@ Mobius Harness can apply other skills as needed:
 - `bug-triage` for severity, reproduction, and likely root cause.
 - `commit-message-writer` for conventional commit messages.
 - `team-subagent-orchestrator` only when the user explicitly authorizes delegation.
+- `superpowers:brainstorming` for creative work, feature shaping, unclear product intent, or competing solution paths.
+- `superpowers:writing-plans` for Standard or Strict deliveries that need a multi-step executable implementation plan.
 
 ## Completion Rule
 

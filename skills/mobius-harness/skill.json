@@ -2,7 +2,7 @@
   "id": "mobius-harness",
   "title": "Mobius Harness",
   "description": "Use when a software delivery request spans requirements, planning, implementation, validation, PR/MR handling, CI/CD tracking, or delivery reporting.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "tags": ["delivery", "orchestration", "software-engineering", "ci-cd", "pr-workflow", "requirements", "validation"],
   "input_schema": {
     "request": "string — user's feature, bugfix, refactor, or delivery goal",
@@ -18,8 +18,10 @@
     "Split large, risky, or blocked phases into subphases, and keep a status record for every phase and subphase.",
     "Each phase or subphase status record must include Goal, Checklist, Gate Ledger, Todo List, Failure List, and Change List.",
     "Maintain Gate Ledger rows with gate id, phase, required evidence, status, evidence pointer, and exception detail when relevant.",
-    "Analyze requirements before implementation by clarifying the goal, background, success criteria, scope, non-goals, risks, and open questions.",
-    "Inspect the repository, identify relevant specialist skills, and produce a delivery plan with implementation steps, validation commands, acceptance criteria, and checkpoints.",
+    "Analyze requirements before implementation by clarifying the goal, background, success criteria, scope, non-goals, risks, open questions, and the superpowers:brainstorming decision.",
+    "Use superpowers:brainstorming before creative work, feature shaping, behavior design, unclear product intent, or competing solution paths; otherwise record why it is not applicable.",
+    "Inspect the repository, identify relevant specialist skills, and produce a delivery plan with implementation steps, validation commands, acceptance criteria, checkpoints, and the superpowers:writing-plans decision.",
+    "Use superpowers:writing-plans for Standard or Strict deliveries, risky work, multi-step implementation, or agent handoff plans; otherwise record why it is not applicable.",
     "Use the local-repo-development workflow for git worktree setup, branch selection, preservation of unrelated user changes, commit preparation, and CI/CD tracking.",
     "Implement the smallest coherent change, run relevant local validation, review the diff for requirements compliance, implementation quality, test adequacy, security, and regressions before committing, and scan changed files for sensitive information without printing secret values.",
     "Create a PR or MR when requested or required, then asynchronously track CI/CD until it passes, fails, or is canceled; fix in-scope failures and re-check.",
@@ -31,7 +33,7 @@
     "Each persisted artifact belongs to the Delivery Episode Package and must include status, phase marker or timestamp, evidence, and enough phase/subphase state for another agent to audit and resume the delivery.",
     "When blocked, record the failure, try one safe minimal recovery, and ask the user only for the specific decision needed.",
     "When resuming, read the Delivery Episode Package first, identify the earliest incomplete phase or subphase, review Todo List, Failure List, and Change List, confirm git state, and continue from the first unmet gate.",
-    "A delivery is complete only when requirements, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported."
+    "A delivery is complete only when requirements, Superpowers planning decisions, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported."
   ],
   "examples": [
     {

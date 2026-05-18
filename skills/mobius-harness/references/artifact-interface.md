@@ -61,6 +61,7 @@ Evidence format:
 
 - `Phase State`
 - `Gate Ledger`
+- `Superpowers Decisions`
 - `Goal`
 - `Background`
 - `Success Criteria`
@@ -76,6 +77,7 @@ Evidence format:
 - `Gate Ledger`
 - `Repo Findings`
 - `Specialist Skills`
+- `Superpowers Decisions`
 - `Implementation Steps`
 - `Validation Strategy`
 - `Acceptance Criteria`

@@ -15,6 +15,8 @@
 
 其他 skills 是 Mobius Harness 可按需调用的专业能力，例如：
 
+- `superpowers:brainstorming`：创意工作、功能塑形、需求意图不清或存在多个方案时，用于先形成可审查设计
+- `superpowers:writing-plans`：Standard / Strict 交付或多步骤实现中，用于生成可执行计划
 - `local-repo-development`：单仓/多仓拓扑识别、仓库级 agent 指令与 spec/docs 发现、worktree、提交前 review、敏感信息扫描、CI/CD 跟踪
 - `refactor-planner`：按重构范围和范式对比生成低风险阶段计划
 - `api-design-review`：按 API 形态和变更风险审查契约

@@ -18,6 +18,22 @@ Generate `run-id` from the task name in kebab-case, for example `add-user-auth`.
 
 Mobius Harness follows these ordered phases. Each phase has an exit gate; do not move to the next phase until the gate is satisfied or the exception is explicitly recorded.
 
+### Superpowers Planning Hooks
+
+Mobius Harness may use Superpowers skills as phase-level quality gates, but the harness remains the accountable delivery loop.
+
+| Situation | Required Decision |
+|---|---|
+| Creative work, new behavior, unclear product intent, UX shaping, or competing solution paths | Use `superpowers:brainstorming`, or record why it is not applicable. |
+| Multi-step implementation, Standard mode, Strict mode, risky refactor, migration, or work that another agent may execute | Use `superpowers:writing-plans`, or record why it is not applicable. |
+| Already-approved external spec or plan | Record the source artifact and mark the Superpowers step `not-applicable` unless new ambiguity appears. |
+
+Record the decision in the relevant phase state:
+
+- Requirements phase: brainstorming used, not applicable, blocked, or excepted.
+- Plan phase: writing-plans used, not applicable, blocked, or excepted.
+- Gate Ledger evidence: skill name, artifact path, user decision, or reason not applicable.
+
 ### Gate Enforcement Standard
 
 Gates are blocking controls. They are not prose summaries or optional checklist items.
@@ -57,8 +73,8 @@ Recommended subphase naming:
 
 | Gate | Phase | Required work | Exit gate |
 |---|---|---|---|
-| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, and user decisions. | Requirements are specific enough to implement and verify. |
-| `G2` | Plan | Inspect the repo, select specialist skills, define implementation steps, validation commands, acceptance criteria, rollback notes, and checkpoints. | Another agent could implement from the plan without choosing strategy. |
+| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, and the `superpowers:brainstorming` decision. | Requirements are specific enough to implement and verify. |
+| `G2` | Plan | Inspect the repo, select specialist skills, define implementation steps, validation commands, acceptance criteria, rollback notes, checkpoints, and the `superpowers:writing-plans` decision. | Another agent could implement from the plan without choosing strategy. |
 | `G3` | Local Development | Follow `local-repo-development`, including worktree or branch selection and preservation of unrelated changes. | Worktree or branch, base ref, and dirty-state handling are recorded. |
 | `G4` | Implementation | Make the scoped change and keep the diff coherent. | Changed files are intentional and mapped to acceptance criteria. |
 | `G5` | Verification | Run local checks, review the diff, and scan for sensitive information. | Validation outcomes, diff review, sensitive scan, and unresolved risks are recorded. |

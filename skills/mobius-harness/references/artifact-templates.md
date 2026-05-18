@@ -22,12 +22,13 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 - [ ] Success criteria are verifiable.
 - [ ] Scope and non-goals are explicit.
 - [ ] High-impact unknowns are resolved or recorded.
+- [ ] `superpowers:brainstorming` is used or marked not applicable with evidence.
 
 ### Gate Ledger
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, and user decisions are explicit. | blocked | <evidence pointer> | <required if exception> |
+| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, and brainstorming decision are explicit. | blocked | <evidence pointer> | <required if exception> |
 
 ### Todo List
 
@@ -59,6 +60,10 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 ## Open Questions
 
 ## User Decisions
+
+## Superpowers Decisions
+
+- Brainstorming:
 ```
 
 ## plan.md template
@@ -82,12 +87,13 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 - [ ] Implementation steps are ordered.
 - [ ] Validation strategy covers success criteria.
 - [ ] Rollback or mitigation notes are recorded.
+- [ ] `superpowers:writing-plans` is used or marked not applicable with evidence.
 
 ### Gate Ledger
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, affected areas, specialist skills, implementation steps, validation commands, acceptance criteria, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
+| G2 | plan | Repo findings, affected areas, specialist skills, Superpowers planning decision, implementation steps, validation commands, acceptance criteria, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
 
 ### Todo List
 
@@ -107,6 +113,11 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 ## Repo Findings
 
 ## Specialist Skills
+
+## Superpowers Decisions
+
+- Brainstorming:
+- Writing Plans:
 
 ## Implementation Steps
 

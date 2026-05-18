@@ -8,6 +8,8 @@ Mobius Harness should actively consider specialist skills:
 
 | Situation | Skill |
 |---|---|
+| Creative work, feature shaping, behavior design, unclear product intent, competing solution paths | `superpowers:brainstorming` |
+| Multi-step implementation plan, Standard or Strict delivery, risky handoff to another agent | `superpowers:writing-plans` |
 | API contract, compatibility, status codes, auth, versioning | `api-design-review` |
 | Refactor, migration, module split, rollback planning | `refactor-planner` |
 | Bug, crash, regression, unclear reproduction | `bug-triage` |
@@ -23,6 +25,7 @@ Mobius Harness should actively consider specialist skills:
 Delivery is done only when:
 
 - success criteria are met or explicitly marked unmet,
+- Superpowers brainstorming and writing-plans decisions are recorded for requirements and plan gates,
 - Gate Ledger rows `G1` through `G8` are all `pass`, `not-applicable`, or `exception`,
 - no Gate Ledger row is `blocked`,
 - local validation is complete or unavailable with reason,
