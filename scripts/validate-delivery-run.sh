@@ -10,10 +10,11 @@ run_dir="$1"
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 gate_list_file="$(mktemp)"
 hook_list_file="$(mktemp)"
+review_list_file="$(mktemp)"
 
 # shellcheck disable=SC2317
 cleanup() {
-  rm -f "${gate_list_file}" "${hook_list_file}"
+  rm -f "${gate_list_file}" "${hook_list_file}" "${review_list_file}"
 }
 trap cleanup EXIT
 
@@ -39,6 +40,20 @@ required_hooks=(
   before_pr
   after_pr
   before_final
+)
+required_reviews=(
+  requirements_product
+  requirements_engineering
+  requirements_risk
+  plan_architecture
+  plan_validation
+  plan_risk
+  verification_implementation
+  verification_security
+  verification_ci
+  report_delivery
+  report_operations
+  report_user
 )
 valid_statuses=" draft active blocked complete deferred "
 
@@ -266,6 +281,15 @@ is_required_hook() {
   esac
 }
 
+is_required_review() {
+  local review="$1"
+
+  case " ${required_reviews[*]} " in
+    *" ${review} "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 is_expected_hook_for_file() {
   local file="$1"
   local hook="$2"
@@ -283,6 +307,27 @@ is_expected_hook_for_file() {
   esac
 }
 
+is_expected_review_for_file() {
+  local file="$1"
+  local review="$2"
+
+  case "${file}:${review}" in
+    requirements.md:requirements_product) return 0 ;;
+    requirements.md:requirements_engineering) return 0 ;;
+    requirements.md:requirements_risk) return 0 ;;
+    plan.md:plan_architecture) return 0 ;;
+    plan.md:plan_validation) return 0 ;;
+    plan.md:plan_risk) return 0 ;;
+    verification.md:verification_implementation) return 0 ;;
+    verification.md:verification_security) return 0 ;;
+    verification.md:verification_ci) return 0 ;;
+    delivery-report.md:report_delivery) return 0 ;;
+    delivery-report.md:report_operations) return 0 ;;
+    delivery-report.md:report_user) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 for file in "${required_files[@]}"; do
   path="${run_dir}/${file}"
 
@@ -292,7 +337,7 @@ for file in "${required_files[@]}"; do
     continue
   fi
 
-  for marker in "Status:" "Phase:" "Updated:" "Evidence:" "## Phase State" "### Goal" "### Checklist" "### Gate Ledger" "### Hook Ledger" "### Todo List" "### Failure List" "### Change List"; do
+  for marker in "Status:" "Phase:" "Updated:" "Evidence:" "## Phase State" "### Goal" "### Checklist" "### Gate Ledger" "### Hook Ledger" "### Review Ledger" "### Todo List" "### Failure List" "### Change List"; do
     require_marker "${path}" "${file}" "${marker}"
   done
 
@@ -402,6 +447,101 @@ for file in "${required_files[@]}"; do
         }
         if (!change_has[gate]) {
           printf("ERROR: %s gate %s exception not recorded in Change List\n", file, gate)
+          invalid = 1
+        }
+      }
+      exit invalid ? 1 : 0
+    }
+  ' "${path}"; then
+    status=1
+  fi
+
+  if ! awk -F'|' -v file="${file}" '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^### Failure List/ {
+      section = "failure"
+      next
+    }
+
+    /^### Change List/ {
+      section = "change"
+      next
+    }
+
+    /^### / {
+      section = ""
+    }
+
+    section == "failure" && /^\|/ {
+      for (review in exception_review) {
+        if ($0 ~ review) {
+          failure_has[review] = 1
+        }
+      }
+    }
+
+    section == "change" && /^\|/ {
+      for (review in exception_review) {
+        if ($0 ~ review) {
+          change_has[review] = 1
+        }
+      }
+    }
+
+    /^\|[ \t]*(requirements|plan|verification|report)_[a-z_]+[ \t]*\|/ {
+      review = trim($2)
+      status_value = trim($6)
+      resolution = trim($7)
+      evidence = trim($8)
+
+      if (seen_review[review]) {
+        printf("ERROR: %s review %s appears more than once\n", file, review)
+        invalid = 1
+      }
+      seen_review[review] = 1
+
+      if (status_value != "pass" && status_value != "not-applicable" && status_value != "exception" && status_value != "blocked") {
+        printf("ERROR: %s review %s has invalid status: %s\n", file, review, status_value)
+        invalid = 1
+      }
+
+      if (status_value == "blocked") {
+        printf("ERROR: %s review %s is blocked\n", file, review)
+        invalid = 1
+      }
+
+      if (resolution == "" || resolution ~ /^<.*>$/) {
+        printf("ERROR: %s review %s missing resolution\n", file, review)
+        invalid = 1
+      }
+
+      if (evidence == "" || evidence ~ /^<.*>$/) {
+        printf("ERROR: %s review %s missing evidence\n", file, review)
+        invalid = 1
+      }
+
+      if (evidence !~ /^(cmd|file|url|decision|reason):/) {
+        printf("ERROR: %s review %s evidence must start with cmd:, file:, url:, decision:, or reason:\n", file, review)
+        invalid = 1
+      }
+
+      if (status_value == "exception") {
+        exception_review[review] = 1
+      }
+    }
+
+    END {
+      for (review in exception_review) {
+        if (!failure_has[review]) {
+          printf("ERROR: %s review %s exception not recorded in Failure List\n", file, review)
+          invalid = 1
+        }
+        if (!change_has[review]) {
+          printf("ERROR: %s review %s exception not recorded in Change List\n", file, review)
           invalid = 1
         }
       }
@@ -574,6 +714,42 @@ for file in "${required_files[@]}"; do
       print trim($2) "\t" trim($6)
     }
   ' "${path}")
+
+  while IFS=$'\t' read -r review evidence; do
+    [[ -n "${review}" ]] || continue
+
+    if [[ "${evidence}" == file:* ]]; then
+      evidence_path="${evidence#file:}"
+      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${run_dir}/${evidence_path}" ]]; then
+        echo "ERROR: ${file} review ${review} file evidence not found: ${evidence_path}"
+        status=1
+      fi
+    elif [[ "${evidence}" == url:* ]]; then
+      evidence_url="${evidence#url:}"
+      if [[ ! "${evidence_url}" =~ ^https?:// ]]; then
+        echo "ERROR: ${file} review ${review} URL evidence must start with http:// or https://"
+        status=1
+      fi
+    fi
+
+    if ! is_required_review "${review}"; then
+      echo "ERROR: ${file} has unexpected review id: ${review}"
+      status=1
+    elif ! is_expected_review_for_file "${file}" "${review}"; then
+      echo "ERROR: ${file} has misplaced review id: ${review}"
+      status=1
+    fi
+    printf '%s\n' "${review}" >> "${review_list_file}"
+  done < <(awk -F'|' '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^\|[ \t]*(requirements|plan|verification|report)_[a-z_]+[ \t]*\|/ {
+      print trim($2) "\t" trim($8)
+    }
+  ' "${path}")
 done
 
 for gate in "${required_gates[@]}"; do
@@ -598,8 +774,19 @@ for hook in "${required_hooks[@]}"; do
   fi
 done
 
+for review in "${required_reviews[@]}"; do
+  review_count="$(grep -c -E "^${review}$" "${review_list_file}" || true)"
+  if [[ "${review_count}" -eq 0 ]]; then
+    echo "ERROR: missing Review Ledger row for ${review}"
+    status=1
+  elif [[ "${review_count}" -gt 1 ]]; then
+    echo "ERROR: Review Ledger row for ${review} appears more than once in delivery run"
+    status=1
+  fi
+done
+
 if [[ "${status}" -eq 0 ]]; then
-  echo "Delivery run gates and hooks validated successfully."
+  echo "Delivery run gates, hooks, and reviews validated successfully."
 fi
 
 exit "${status}"

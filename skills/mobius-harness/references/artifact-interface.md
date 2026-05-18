@@ -26,7 +26,7 @@ Use Markdown for all persisted artifacts. Every artifact must include:
 - `Phase`: matching the current delivery phase.
 - `Updated`: timestamp or clear phase marker.
 - `Evidence`: links, commands, file paths, PR/MR URL, CI/CD URL, or explicit reason when evidence is unavailable.
-- Phase/subphase records using `Goal`, `Checklist`, `Gate Ledger`, `Hook Ledger`, `Todo List`, `Failure List`, and `Change List`.
+- Phase/subphase records using `Goal`, `Checklist`, `Gate Ledger`, `Hook Ledger`, `Review Ledger`, `Todo List`, `Failure List`, and `Change List`.
 
 Evidence is mandatory. A completed phase, subphase, or final delivery without evidence is invalid.
 
@@ -62,6 +62,23 @@ Hook rules:
 - A `blocked` hook prevents phase completion and final delivery completion.
 - For Standard and Strict deliveries, the combined artifacts must contain exactly one terminal row for every required hook from `hook-policy.md`.
 
+## Review Ledger
+
+Every persisted phase/subphase record must include a Review Ledger table:
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+
+Review rules:
+
+- Use review ids from `delivery-process.md`.
+- `Status` must be one of `pass`, `not-applicable`, `exception`, or `blocked`.
+- `Evidence` must use the same evidence prefixes as Gate Ledger evidence.
+- `Resolution` is required for every review and must state how the challenge was handled.
+- `Resolution` must identify accepted risk when `Status` is `exception`; record the same accepted risk in Failure List and Change List.
+- A `blocked` review prevents phase completion and final delivery completion.
+- The combined artifacts must contain exactly one terminal row for every required review id from `delivery-process.md`.
+
 Evidence format:
 
 - Commands: `cmd:<command>` plus result, short output summary, and failure log path or excerpt when relevant.
@@ -78,6 +95,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Review Ledger`
 - `Superpowers Decisions`
 - `Goal`
 - `Background`
@@ -95,6 +113,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Review Ledger`
 - `Repo Findings`
 - `Specialist Skills`
 - `Superpowers Decisions`
@@ -112,6 +131,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Review Ledger`
 - `Local Commands`
 - `Command Results`
 - `Diff Review`
@@ -129,6 +149,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Review Ledger`
 - `Summary`
 - `Requirements Result`
 - `Implementation Summary`

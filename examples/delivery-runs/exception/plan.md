@@ -33,6 +33,14 @@ Show a complete plan gate for an exception fixture.
 |---|---|---|---|---|---|
 | before_plan | before G2 completion | Record skill activation, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/exception/plan.md | |
 
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| plan_architecture | Architecture | Boundaries and alternatives | Is the selected approach justified against alternatives? | pass | Declarative fixture is selected over irrelevant product implementation. | file:examples/delivery-runs/exception/plan.md |
+| plan_validation | Validation | Acceptance and tests | Does validation prove every acceptance criterion? | pass | Validator command maps to fixture acceptance criteria. | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/exception |
+| plan_risk | Risk | Rollback and dependency impact | Are rollback, dependency, and migration risks explicit? | pass | No new dependency and rollback are recorded. | file:examples/delivery-runs/exception/plan.md |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |

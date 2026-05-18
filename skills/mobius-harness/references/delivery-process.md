@@ -97,6 +97,18 @@ Gate rules:
 - An exception must identify who or what accepted the risk: a user decision, repository instruction, documented policy, or explicit out-of-scope rationale.
 - For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before the final report when the script exists. Record failure output in Failure List and do not complete the delivery until it passes or is explicitly excepted.
 
+### CI/CD Follow-up Standard
+
+CI/CD follow-up is asynchronous by default during small iterative PR/MR updates. The agent should push the update, record the head SHA, check URLs, and planned next observation, then return control to the user unless one of these conditions applies:
+
+- the user explicitly asks to wait for CI/CD,
+- the delivery is about to merge,
+- the delivery is about to release,
+- repository policy requires terminal checks before the next action,
+- a previous observed check failed and the user chooses to wait for the fix run.
+
+When waiting is not selected, record the CI/CD state as `async-observed` or `pending-observation` with evidence. Do not claim CI/CD passed until the current head SHA has terminal successful checks.
+
 ### Hook Enforcement Standard
 
 Hooks are required controls inside phase gates for Standard and Strict deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Codex-specific evidence rules, and executable hook safety.
@@ -107,6 +119,27 @@ Hook rules:
 - A hook row must include hook id, trigger, required action, status, evidence pointer, and failure handling when relevant.
 - Missing skill activation evidence, missing tool reality evidence, skipped diff review, skipped sensitive scan, unobserved CI/CD, missing cleanup evidence, or missing local runtime sync is `blocked` until converted to `not-applicable` or `exception` with evidence.
 - Executable repository hooks are optional; they require an explicit Dependency Decision and fail closed to `blocked`.
+
+### Adversarial Review Standard
+
+Every phase result must be challenged from multiple roles before it is treated as final. The Review Ledger records those challenges and their resolution.
+
+Required review ids by artifact:
+
+| Artifact | Required Reviews |
+|---|---|
+| `requirements.md` | `requirements_product`, `requirements_engineering`, `requirements_risk` |
+| `plan.md` | `plan_architecture`, `plan_validation`, `plan_risk` |
+| `verification.md` | `verification_implementation`, `verification_security`, `verification_ci` |
+| `delivery-report.md` | `report_delivery`, `report_operations`, `report_user` |
+
+Review rules:
+
+- Each review row must identify the role, perspective, challenge, status, resolution, and evidence.
+- Review status must be `pass`, `not-applicable`, `exception`, or `blocked`.
+- A blocked review prevents that phase result from becoming final and prevents the next execution phase.
+- An exception must identify who or what accepted the risk and must be mirrored in Failure List and Change List.
+- The agent may perform the review itself unless the user explicitly asks for subagents, but it must use distinct perspectives rather than one generic self-review.
 
 Large, risky, or blocked phases must be split into subphases. A subphase uses the same status record format as a phase, but with a narrower goal and checklist.
 
@@ -132,7 +165,7 @@ Recommended subphase naming:
 | `G4` | Implementation | Make the scoped change and keep the diff coherent. | Changed files are intentional and mapped to acceptance criteria. |
 | `G5` | Verification | Run local checks, review the diff, and scan for sensitive information. | Validation outcomes, diff review, sensitive scan, and unresolved risks are recorded. |
 | `G6` | PR/MR | Commit and open PR/MR when applicable. | PR/MR URL or not-applicable reason is recorded. |
-| `G7` | CI/CD | Track CI/CD to pass, fail, or canceled when remote checks exist. | Terminal CI/CD state is recorded or marked not applicable with reason. |
+| `G7` | CI/CD | Record CI/CD check state when remote checks exist and choose async follow-up or terminal waiting by policy. | Terminal CI/CD state, async observation state, or not-applicable reason is recorded with evidence. |
 | `G8` | Report | Summarize what was delivered and what remains. | Delivery report is complete and can be sent to the user or attached to PR/MR. |
 
 ## Phase State Standard
@@ -143,6 +176,7 @@ Every phase and subphase must record state with these sections:
 - `Checklist`: objective checks required to exit this phase or subphase.
 - `Gate Ledger`: gate id, required evidence, status, evidence pointer, and exception detail.
 - `Hook Ledger`: hook id, trigger, required action, status, evidence pointer, and failure handling.
+- `Review Ledger`: review id, role, perspective, challenge, status, resolution, and evidence.
 - `Todo List`: unfinished actions, preferably with status such as `todo`, `doing`, `blocked`, or `done`.
 - `Failure List`: failed commands, blocked checks, rejected assumptions, CI/CD failures, defects found during review, or unresolved risks.
 - `Change List`: decisions made, files changed, requirement changes, scope changes, validation changes, or follow-up changes.
@@ -188,6 +222,11 @@ Evidence: <commands, files, links, PR/MR, CI/CD, or reason unavailable>
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
+
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
 
 ### Todo List
 

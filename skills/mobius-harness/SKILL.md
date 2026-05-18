@@ -39,6 +39,7 @@ Load references only when needed:
 3. Follow the delivery process in order. Treat each phase gate as a blocking gate, not as a reminder. Do not move to the next phase until the current gate is `pass`, `not-applicable`, or an explicitly recorded `exception`.
    - For Standard and Strict deliveries, maintain a Hook Ledger for required hook controls from `references/hook-policy.md`.
    - Treat `blocked` hooks like `blocked` gates; do not advance until they pass, become not applicable, or are explicitly excepted.
+   - Maintain a Review Ledger for each phase and do not publish that phase's final result or start execution until multi-role adversarial review is resolved.
 4. Analyze requirements first:
    - Restate the goal, background, success criteria, scope, non-goals, risks, and open questions.
    - Classify uncertainties as blocking, accepted, deferred, or not applicable; do not design or implement while blocking unknowns remain.
@@ -70,8 +71,9 @@ Load references only when needed:
 8. Submit and track:
    - Use `commit-message-writer` to produce a clear conventional commit message when committing.
    - Create the PR or MR when requested or when delivery requires review.
-   - Track CI/CD asynchronously until it passes, fails, or is canceled.
-   - If CI/CD fails, inspect logs, summarize the failure, fix in-scope issues, and track the next run to a terminal state.
+   - Default to asynchronous CI/CD follow-up during small iterative PR updates: record the check URLs, head SHA, and next observation point without blocking the user.
+   - Wait synchronously for CI/CD only when the user requests full waiting, when merging, when releasing, or when a gate explicitly requires terminal CI/CD evidence.
+   - If CI/CD fails when observed, inspect logs, summarize the failure, fix in-scope issues, and decide with the user whether to wait for the next run or continue asynchronously.
 9. Deliver the result:
    - Produce a concise delivery report covering requirements, implementation, changed files, local validation, code review, sensitive information scan, PR or MR URL, CI/CD status, risks, and follow-ups.
    - For long or risky tasks, write `.delivery/runs/<run-id>/delivery-report.md`.
@@ -98,6 +100,11 @@ For Standard and Strict deliveries, every phase/subphase must also maintain a Ho
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
 
+Every phase/subphase must maintain a Review Ledger:
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+
 Before moving phases, answer the gate decision in the ledger:
 
 1. What exact evidence proves this gate is satisfied?
@@ -105,6 +112,7 @@ Before moving phases, answer the gate decision in the ledger:
 3. If using an exception, where is the accepted risk recorded?
 4. What unfinished Todo List or Failure List items carry forward?
 5. Which hooks were triggered for this phase, and what evidence proves each hook ran or was not applicable?
+6. Which review roles challenged the phase result, and how were their blocking findings resolved?
 
 For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before marking the delivery complete when that script exists in the repository. If the script is unavailable, record that as a gate exception with reason.
 
@@ -118,7 +126,7 @@ Use these phase gates. Each phase may be split into smaller subphases when the w
 4. `G4 Implementation`: changed files are intentional and mapped to accepted requirements.
 5. `G5 Verification`: local checks, diff review, and sensitive information scan are complete or explicitly marked unavailable with reason.
 6. `G6 PR/MR`: PR/MR URL or reason for not creating one is recorded.
-7. `G7 CI/CD`: terminal CI/CD state is recorded when remote checks exist.
+7. `G7 CI/CD`: terminal CI/CD state, async observation state, or not-applicable reason is recorded when remote checks exist.
 8. `G8 Report`: final delivery report is complete and includes all unresolved risks or follow-ups.
 
 For every phase and subphase, maintain a status record with:
@@ -127,6 +135,7 @@ For every phase and subphase, maintain a status record with:
 - Checklist: objective exit checks for the phase or subphase.
 - Gate Ledger: phase gate decisions with status and evidence.
 - Hook Ledger: Codex-specific controls for skill activation, tool reality, worktree hygiene, review, CI/CD, cleanup, and local runtime sync.
+- Review Ledger: multi-role adversarial checks of the phase result before advancing.
 - Todo List: remaining actions, each with owner or status when useful.
 - Failure List: failed commands, blocked checks, rejected assumptions, CI/CD failures, or unresolved risks.
 - Change List: decisions made, files changed, scope changes, requirement changes, validation changes, or follow-up changes.
@@ -136,6 +145,7 @@ For every phase and subphase, maintain a status record with:
 - A phase is complete only when every checklist item has evidence or an explicit unavailable reason.
 - A phase cannot be `complete` while its Gate Ledger has any `blocked` row.
 - A Standard or Strict phase cannot be `complete` while any required Hook Ledger row is `blocked` or missing.
+- A phase cannot be `complete` while any required Review Ledger row is `blocked` or missing.
 - Requirements and plan phases must record whether `superpowers:brainstorming` and `superpowers:writing-plans` were used, skipped as not applicable, unavailable, or excepted with accepted risk.
 - Requirements phases must record Requirements Maturity and cannot advance to design while blocking unknowns remain.
 - Plan phases must record Design Readiness and cannot advance to implementation while the selected approach, acceptance mapping, or validation strategy is unresolved.
@@ -143,6 +153,7 @@ For every phase and subphase, maintain a status record with:
 - A delivery is complete only when requirements, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported.
 - A delivery cannot be `complete` until gates `G1` through `G8` are `pass`, `not-applicable`, or `exception`.
 - A Standard or Strict delivery cannot be `complete` until required hooks from `hook-policy.md` are `pass`, `not-applicable`, or `exception`.
+- A delivery cannot be `complete` until required adversarial reviews are `pass`, `not-applicable`, or `exception`.
 - For Standard and Strict mode, persisted artifacts must be enough for another agent to resume without relying on conversation memory.
 - Do not collapse requirements, planning, implementation, and verification into a single vague status update.
 - Do not ask the user for decisions that can be answered by reading the repository or running safe local commands.
@@ -162,7 +173,7 @@ For long or risky work, maintain `.delivery/runs/<run-id>/` as a Delivery Episod
 - `verification.md`: Commands run, outcomes, local failures and fixes, diff review notes, sensitive information scan result, PR/MR URL, and CI/CD runs.
 - `delivery-report.md`: Executive summary, changed files, implementation summary, validation summary, PR/MR and CI/CD status, risks, follow-ups, release notes, and version or release report notes when applicable.
 
-Each artifact must include status, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Hook Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Hook Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
+Each artifact must include status, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
 
 When resuming, read the Delivery Episode Package first, identify the earliest incomplete phase or subphase, review Todo List, Failure List, and Change List, confirm git state, and continue from the first unmet gate.
 

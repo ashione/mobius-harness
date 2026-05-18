@@ -38,6 +38,14 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 |---|---|---|---|---|---|
 | before_requirements | before G1 completion | Read user goal, repo instructions, relevant specs/docs, uncertainty disposition, Requirements Maturity, and brainstorming decision. | blocked | <evidence pointer> | <required if exception> |
 
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| requirements_product | Product | User intent and acceptance | Are success criteria specific and user-visible? | blocked | <resolution> | <evidence pointer> |
+| requirements_engineering | Engineering | Feasibility and repo constraints | Can the repo support this without hidden assumptions? | blocked | <resolution> | <evidence pointer> |
+| requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | blocked | <resolution> | <evidence pointer> |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |
@@ -122,6 +130,14 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
 | before_plan | before G2 completion | Record skill activation, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision. | blocked | <evidence pointer> | <required if exception> |
+
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| plan_architecture | Architecture | Boundaries and alternatives | Is the selected approach justified against alternatives? | blocked | <resolution> | <evidence pointer> |
+| plan_validation | Validation | Acceptance and tests | Does validation prove every acceptance criterion? | blocked | <resolution> | <evidence pointer> |
+| plan_risk | Risk | Rollback and dependency impact | Are rollback, dependency, and migration risks explicit? | blocked | <resolution> | <evidence pointer> |
 
 ### Todo List
 
@@ -210,7 +226,7 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 | G4 | implementation | Changed files are intentional and mapped to acceptance criteria. | blocked | <evidence pointer> | <required if exception> |
 | G5 | verification | Local commands, command results, diff review, sensitive information scan, and unresolved risks are recorded. | blocked | <evidence pointer> | <required if exception> |
 | G6 | pr-mr | PR/MR URL or not-applicable reason is recorded. | blocked | <evidence pointer> | <required if exception> |
-| G7 | ci-cd | Terminal CI/CD state or not-applicable reason is recorded. | blocked | <evidence pointer> | <required if exception> |
+| G7 | ci-cd | Terminal CI/CD state, async observation state, or not-applicable reason is recorded. | blocked | <evidence pointer> | <required if exception> |
 
 ### Hook Ledger
 
@@ -221,6 +237,14 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 | before_commit | before commit or PR/MR preparation | Run or record local validation, diff review, and sensitive information scan. | blocked | <evidence pointer> | <required if exception> |
 | before_pr | before PR/MR creation or not-applicable decision | Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created. | blocked | <evidence pointer> | <required if exception> |
 | after_pr | after PR/MR creation or not-applicable decision | Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up. | blocked | <evidence pointer> | <required if exception> |
+
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| verification_implementation | Implementation | Diff and requirements fit | Do changed files map cleanly to accepted requirements? | blocked | <resolution> | <evidence pointer> |
+| verification_security | Security | Secrets and unsafe behavior | Were sensitive data and unsafe operations checked? | blocked | <resolution> | <evidence pointer> |
+| verification_ci | CI/CD | Remote checks and async policy | Is CI/CD state recorded without unsupported pass claims? | blocked | <resolution> | <evidence pointer> |
 
 ### Todo List
 
@@ -297,6 +321,14 @@ Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavail
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
 | before_final | before final delivery report | Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report. | blocked | <evidence pointer> | <required if exception> |
+
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| report_delivery | Delivery | User-facing result | Does the report answer what changed and what remains? | blocked | <resolution> | <evidence pointer> |
+| report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | blocked | <resolution> | <evidence pointer> |
+| report_user | User Advocate | Clarity and unsupported claims | Are claims backed by evidence and easy to act on? | blocked | <resolution> | <evidence pointer> |
 
 ### Todo List
 

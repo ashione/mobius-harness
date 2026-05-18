@@ -107,4 +107,25 @@ cat >> "${duplicate_hook}/plan.md" <<'DUPLICATE_HOOK'
 DUPLICATE_HOOK
 expect_failure "${duplicate_hook}" "plan.md hook before_plan appears more than once"
 
+missing_review_ledger="$(copy_passing_fixture missing-review-ledger)"
+perl -0pi -e 's/\n### Review Ledger\n\n\| Review \| Role \| Perspective \| Challenge \| Status \| Resolution \| Evidence \|\n\|---\|---\|---\|---\|---\|---\|---\|\n\| plan_architecture \|[^\n]*\n\| plan_validation \|[^\n]*\n\| plan_risk \|[^\n]*\n//' "${missing_review_ledger}/plan.md"
+expect_failure "${missing_review_ledger}" "plan.md missing marker: ### Review Ledger"
+
+blocked_review="$(copy_passing_fixture blocked-review)"
+perl -0pi -e 's/\| verification_ci \| CI\/CD \| Remote checks and async policy \| Is CI\/CD state recorded without unsupported pass claims\? \| pass \| Fixture marks PR and CI\/CD as not applicable with reason\. \| reason:fixture has no live PR \|/| verification_ci | CI\/CD | Remote checks and async policy | Is CI\/CD state recorded without unsupported pass claims? | blocked | CI\/CD evidence is unresolved. | reason:intentional review blocker |/' "${blocked_review}/verification.md"
+expect_failure "${blocked_review}" "verification.md review verification_ci is blocked"
+
+misplaced_review="$(copy_passing_fixture misplaced-review)"
+perl -0pi -e 's/\n\| plan_architecture \|[^\n]*\n//' "${misplaced_review}/plan.md"
+cat >> "${misplaced_review}/requirements.md" <<'MISPLACED_REVIEW'
+| plan_architecture | Architecture | Misplaced review used to prove artifact ownership. | Does ownership validation reject this row? | pass | Ownership validation should fail before delivery completes. | decision:misplaced |
+MISPLACED_REVIEW
+expect_failure "${misplaced_review}" "requirements.md has misplaced review id: plan_architecture"
+
+duplicate_review="$(copy_passing_fixture duplicate-review)"
+cat >> "${duplicate_review}/plan.md" <<'DUPLICATE_REVIEW'
+| plan_architecture | Architecture | Duplicate review used to prove uniqueness. | Does package-level uniqueness reject this row? | pass | Duplicate review should fail validation. | decision:duplicate |
+DUPLICATE_REVIEW
+expect_failure "${duplicate_review}" "plan.md review plan_architecture appears more than once"
+
 echo "Delivery run validator regression tests passed."

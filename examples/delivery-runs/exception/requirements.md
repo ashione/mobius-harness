@@ -31,6 +31,14 @@ Show a complete requirements gate for an exception fixture.
 |---|---|---|---|---|---|
 | before_requirements | before G1 completion | Read user goal, repo instructions, relevant specs/docs, uncertainty disposition, Requirements Maturity, and brainstorming decision. | pass | decision:fixed fixture requirements reviewed | |
 
+### Review Ledger
+
+| Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
+|---|---|---|---|---|---|---|
+| requirements_product | Product | User intent and acceptance | Are success criteria specific and user-visible? | pass | Fixture success criteria are explicit. | file:examples/delivery-runs/exception/requirements.md |
+| requirements_engineering | Engineering | Feasibility and repo constraints | Can the repo support this without hidden assumptions? | pass | Fixture scope is limited to delivery artifact validation. | file:examples/delivery-runs/exception/requirements.md |
+| requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | pass | No blocking fixture unknowns remain. | decision:fixture |
+
 ### Todo List
 
 | Item | Status | Owner | Evidence |

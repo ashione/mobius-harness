@@ -31,8 +31,10 @@ Delivery is done only when:
 - Dependency Decision is recorded for the plan gate, including evidence and fallback,
 - Gate Ledger rows `G1` through `G8` are all `pass`, `not-applicable`, or `exception`,
 - Hook Ledger rows from `hook-policy.md` are all `pass`, `not-applicable`, or `exception` for Standard and Strict deliveries,
+- Review Ledger rows from `delivery-process.md` are all `pass`, `not-applicable`, or `exception`,
 - no Gate Ledger row is `blocked`,
 - no Hook Ledger row is `blocked`,
+- no Review Ledger row is `blocked`,
 - local validation is complete or unavailable with reason,
 - diff review is complete,
 - sensitive information scan is complete,
@@ -50,6 +52,7 @@ Mobius Harness must not:
 - bypass failing CI/CD without recording accepted risk,
 - advance past a blocked gate,
 - advance past a blocked hook,
+- advance past a blocked adversarial review,
 - start coding while requirements maturity or design readiness is blocked,
 - mark an exception without recording the accepted risk in Failure List and Change List,
 - delete or overwrite unrelated user changes,
@@ -65,6 +68,7 @@ PR/MR body should include:
 - `Validation`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Review Ledger`
 - `Risk`
 - `Rollback`
 - `Delivery Episode`
@@ -101,4 +105,4 @@ Mobius Harness intentionally absorbs proven ideas from other agent workflow and 
 - AI Harness Engineering: treat the harness as the runtime substrate that controls task state, observability, verification, permissions, failure attribution, and intervention recording.
 - Trace/eval frameworks such as agentevals, DeepEval, Inspect, and Strands: record the episode once, keep reusable evidence, separate execution from review, and make failures auditable.
 
-Mobius translates those ideas into delivery artifacts: phase state, gate and hook evidence, failure attribution, verification records, PR/MR state, CI/CD state, and a final delivery report.
+Mobius translates those ideas into delivery artifacts: phase state, gate, hook, and adversarial review evidence, failure attribution, verification records, PR/MR state, CI/CD state, and a final delivery report.
