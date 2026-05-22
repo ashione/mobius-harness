@@ -10,6 +10,7 @@ Use these templates as the default shape for persisted Delivery Episode Package 
 Status: draft | active | blocked | complete | deferred
 Phase: requirements
 Updated: <timestamp or phase marker>
+Runtime: codex | claude-code | generic
 Evidence: <user request, repo files, issue links, or reason unavailable>
 
 ## Phase State
@@ -22,7 +23,9 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 - [ ] Success criteria are verifiable.
 - [ ] Scope and non-goals are explicit.
 - [ ] High-impact unknowns are resolved or recorded.
+- [ ] Linked issues, existing PRs, fork commits, or previous attempts are searched or marked not applicable with evidence.
 - [ ] Blocking unknowns are resolved or explicitly accepted.
+- [ ] Minimum Skill Dependencies are checked, including required Superpowers decisions.
 - [ ] Requirements Maturity is `ready-for-design` or explicitly excepted.
 - [ ] `superpowers:brainstorming` is used or marked not applicable with evidence.
 
@@ -30,13 +33,13 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | <evidence pointer> | <required if exception> |
+| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | <evidence pointer> | <required if exception> |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_requirements | before G1 completion | Read user goal, repo instructions, relevant specs/docs, uncertainty disposition, Requirements Maturity, and brainstorming decision. | blocked | <evidence pointer> | <required if exception> |
+| before_requirements | before G1 completion | [soft] <runtime> hook: Read user goal, repo instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
 
 ### Review Ledger
 
@@ -77,6 +80,23 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 
 ## User Decisions
 
+## Issue and Prior Attempts
+
+- Prior Attempt Search:
+- Prior Attempt Evidence:
+
+| Source | Finding | Difference or Reuse Decision | Evidence |
+|---|---|---|---|
+
+## Minimum Skill Dependencies
+
+| Skill | Minimum Requirement | Dependency Class | Evidence | Fallback |
+|---|---|---|---|---|
+| mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
+| local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
+| superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+
 ## Uncertainty Register
 
 | Unknown | Impact | Disposition | Evidence |
@@ -101,6 +121,7 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 Status: draft | active | blocked | complete | deferred
 Phase: plan
 Updated: <timestamp or phase marker>
+Runtime: codex | claude-code | generic
 Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 ## Phase State
@@ -111,10 +132,13 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 - [ ] Affected areas are identified.
 - [ ] Specialist skills are selected or rejected with reason.
+- [ ] Minimum Skill Dependencies are checked and carried forward from requirements.
 - [ ] Implementation steps are ordered.
+- [ ] Prior attempts are compared against the selected approach or marked not applicable with evidence.
 - [ ] Design options and rejected alternatives are recorded.
 - [ ] Design Readiness is `ready-for-implementation` or explicitly excepted.
 - [ ] Validation strategy covers success criteria.
+- [ ] Validation prerequisites are recorded before validation commands.
 - [ ] Rollback or mitigation notes are recorded.
 - [ ] Dependency Decision is recorded.
 - [ ] `superpowers:writing-plans` is used or marked not applicable with evidence.
@@ -123,13 +147,13 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_plan | before G2 completion | Record skill activation, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision. | blocked | <evidence pointer> | <required if exception> |
+| before_plan | before G2 completion | [soft] <runtime> hook: Record skill activation, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
 
 ### Review Ledger
 
@@ -158,10 +182,27 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 ## Specialist Skills
 
+## Minimum Skill Dependencies
+
+| Skill | Minimum Requirement | Dependency Class | Evidence | Fallback |
+|---|---|---|---|---|
+| mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
+| local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
+| superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+
 ## Superpowers Decisions
 
 - Brainstorming:
 - Writing Plans:
+
+## Prior Attempt Comparison
+
+- Prior Attempt Disposition:
+- Freshness Evidence:
+
+| Attempt | Useful Elements | Differences from Selected Approach | Action |
+|---|---|---|---|
 
 ## Design Options
 
@@ -187,6 +228,12 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 ## Validation Strategy
 
+## Validation Prerequisites
+
+| Prerequisite | Applies To | Evidence | Fallback |
+|---|---|---|---|
+| Repository setup or generated artifacts | Validation commands that require setup before they can run cleanly | reason:none identified yet | record failed command, run the prerequisite, and rerun the validation command |
+
 ## Acceptance Criteria
 
 ## Rollback Notes
@@ -202,6 +249,7 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 Status: draft | active | blocked | complete | deferred
 Phase: verification
 Updated: <timestamp or phase marker>
+Runtime: codex | claude-code | generic
 Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or reason unavailable>
 
 ## Phase State
@@ -232,11 +280,11 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_edit | before editing files | Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes. | blocked | <evidence pointer> | <required if exception> |
-| after_edit | after editing files | Map changed files to acceptance criteria and check for unintended churn. | blocked | <evidence pointer> | <required if exception> |
-| before_commit | before commit or PR/MR preparation | Run or record local validation, diff review, and sensitive information scan. | blocked | <evidence pointer> | <required if exception> |
-| before_pr | before PR/MR creation or not-applicable decision | Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created. | blocked | <evidence pointer> | <required if exception> |
-| after_pr | after PR/MR creation or not-applicable decision | Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up. | blocked | <evidence pointer> | <required if exception> |
+| before_edit | before editing files | [soft] <runtime> hook: Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
+| after_edit | after editing files | [soft] <runtime> hook: Map changed files to acceptance criteria and check for unintended churn; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
+| before_commit | before commit or PR/MR preparation | [soft] <runtime> hook: Run or record local validation, diff review, and sensitive information scan; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
+| before_pr | before PR/MR creation or not-applicable decision | [soft] <runtime> hook: Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
+| after_pr | after PR/MR creation or not-applicable decision | [soft] <runtime> hook: Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception or warn> |
 
 ### Review Ledger
 
@@ -295,6 +343,7 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 Status: draft | active | blocked | complete | deferred
 Phase: report
 Updated: <timestamp or phase marker>
+Runtime: codex | claude-code | generic
 Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavailable>
 
 ## Phase State
@@ -320,7 +369,7 @@ Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavail
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_final | before final delivery report | Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report. | blocked | <evidence pointer> | <required if exception> |
+| before_final | before final delivery report | [soft] <runtime> hook: Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
 
 ### Review Ledger
 

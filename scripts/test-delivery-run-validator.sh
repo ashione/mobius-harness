@@ -46,6 +46,14 @@ copy_passing_fixture() {
 bash scripts/validate-delivery-run.sh examples/delivery-runs/passing
 bash scripts/validate-delivery-run.sh examples/delivery-runs/exception
 
+external_root="${tmp_dir}/external-root"
+external_run_id="external-root-run"
+external_run_dir="${external_root}/.delivery/runs/${external_run_id}"
+mkdir -p "$(dirname "${external_run_dir}")"
+cp -R examples/delivery-runs/passing "${external_run_dir}"
+perl -0pi -e "s#file:examples/delivery-runs/passing/#file:.delivery/runs/${external_run_id}/#g" "${external_run_dir}"/*.md
+bash scripts/validate-delivery-run.sh "${external_run_dir}"
+
 expect_failure examples/delivery-runs/blocked "requirements.md gate G1 is blocked"
 
 missing_brainstorming="$(copy_passing_fixture missing-brainstorming)"
@@ -56,9 +64,29 @@ missing_writing_plans="$(copy_passing_fixture missing-writing-plans)"
 perl -0pi -e 's/^- Writing Plans:.*\n//m' "${missing_writing_plans}/plan.md"
 expect_failure "${missing_writing_plans}" "plan.md missing Writing Plans decision value"
 
+missing_minimum_dependencies="$(copy_passing_fixture missing-minimum-dependencies)"
+perl -0pi -e 's/\n## Minimum Skill Dependencies\n\n\| Skill \| Minimum Requirement \| Dependency Class \| Evidence \| Fallback \|\n\|---\|---\|---\|---\|---\|\n(?:\|[^\n]*\n)+//' "${missing_minimum_dependencies}/requirements.md"
+expect_failure "${missing_minimum_dependencies}" "requirements.md missing marker: ## Minimum Skill Dependencies"
+
+missing_prior_attempts="$(copy_passing_fixture missing-prior-attempts)"
+perl -0pi -e 's/\n## Issue and Prior Attempts\n\n- Prior Attempt Search:.*?\n\n(?=## Minimum Skill Dependencies)//s' "${missing_prior_attempts}/requirements.md"
+expect_failure "${missing_prior_attempts}" "requirements.md missing marker: ## Issue and Prior Attempts"
+
+missing_prior_attempt_comparison="$(copy_passing_fixture missing-prior-attempt-comparison)"
+perl -0pi -e 's/\n## Prior Attempt Comparison\n\n- Prior Attempt Disposition:.*?\n\n(?=## Design Options)//s' "${missing_prior_attempt_comparison}/plan.md"
+expect_failure "${missing_prior_attempt_comparison}" "plan.md missing marker: ## Prior Attempt Comparison"
+
+missing_minimum_dependency_row="$(copy_passing_fixture missing-minimum-dependency-row)"
+perl -0pi -e 's/^\| superpowers:writing-plans \|.*\n//m' "${missing_minimum_dependency_row}/plan.md"
+expect_failure "${missing_minimum_dependency_row}" "plan.md missing minimum skill dependency: superpowers:writing-plans"
+
 missing_dependency="$(copy_passing_fixture missing-dependency)"
 perl -0pi -e 's/\n## Dependency Decision\n\n- Decision:.*?\n\n## Implementation Steps/\n## Implementation Steps/s' "${missing_dependency}/plan.md"
 expect_failure "${missing_dependency}" "plan.md missing marker: ## Dependency Decision"
+
+missing_validation_prerequisites="$(copy_passing_fixture missing-validation-prerequisites)"
+perl -0pi -e 's/\n## Validation Prerequisites\n\n\| Prerequisite \| Applies To \| Evidence \| Fallback \|\n\|---\|---\|---\|---\|\n(?:\|[^\n]*\n)+//' "${missing_validation_prerequisites}/plan.md"
+expect_failure "${missing_validation_prerequisites}" "plan.md missing marker: ## Validation Prerequisites"
 
 duplicate_gate="$(copy_passing_fixture duplicate-gate)"
 awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="gate" {print "| G2 | plan | Duplicate row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Gate Ledger$/ {section="gate"} /^### / && $0 !~ /^### Gate Ledger$/ {section=""}' "${duplicate_gate}/requirements.md" > "${duplicate_gate}/requirements.tmp"
@@ -90,17 +118,41 @@ perl -0pi -e 's/\n### Hook Ledger\n\n\| Hook \| Trigger \| Required Action \| St
 expect_failure "${missing_hook_ledger}" "plan.md missing marker: ### Hook Ledger"
 
 blocked_hook="$(copy_passing_fixture blocked-hook)"
-perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | Run or record local validation, diff review, and sensitive information scan. | blocked | reason:intentional hook blocker | |/' "${blocked_hook}/verification.md"
+perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| \[hard\] Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | [hard] Run or record local validation, diff review, and sensitive information scan. | blocked | reason:intentional hook blocker | |/' "${blocked_hook}/verification.md"
 expect_failure "${blocked_hook}" "verification.md hook before_commit is blocked"
+
+missing_gate_mode="$(copy_passing_fixture missing-gate-mode)"
+perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| \[hard\] Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | Run or record local validation, diff review, and sensitive information scan. | pass | cmd:bash scripts\/validate-delivery-run.sh examples\/delivery-runs\/passing | |/' "${missing_gate_mode}/verification.md"
+expect_failure "${missing_gate_mode}" "verification.md hook before_commit missing gate mode prefix: [soft] or [hard]"
+
+soft_gate_warning="$(copy_passing_fixture soft-gate-warning)"
+perl -0pi -e 's/\| after_pr \| after PR\/MR creation or not-applicable decision \| \[soft\] Record PR\/MR URL or not-applicable reason, CI\/CD observation plan, terminal check state, and failure follow-up\. \| not-applicable \| reason:fixture is validated by repository CI when committed \| \|/| after_pr | after PR\/MR creation or not-applicable decision | [soft] Record PR\/MR URL or not-applicable reason, CI\/CD observation plan, terminal check state, and failure follow-up. | warn | reason:soft agent gate recorded async CI warning | reason:soft warning does not block final delivery |/' "${soft_gate_warning}/verification.md"
+awk '1; /^\|---\|---\|---\|---\|---\|$/ && section=="failure" {print "| after_pr | Soft gate warning documents async CI observation without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
+mv "${soft_gate_warning}/verification.tmp" "${soft_gate_warning}/verification.md"
+awk '1; /^\|---\|---\|---\|---\|$/ && section=="change" {print "| after_pr | Exercise soft agent gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
+mv "${soft_gate_warning}/verification.tmp" "${soft_gate_warning}/verification.md"
+bash scripts/validate-delivery-run.sh "${soft_gate_warning}" >/dev/null
+
+soft_before_commit_warning="$(copy_passing_fixture soft-before-commit-warning)"
+perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| \[hard\] Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | [soft] Run or record local validation, diff review, and sensitive information scan. | warn | reason:soft before_commit warning recorded | reason:soft warning does not block final delivery |/' "${soft_before_commit_warning}/verification.md"
+awk '1; /^\|---\|---\|---\|---\|---\|$/ && section=="failure" {print "| before_commit | Soft gate warning documents validation warning without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
+mv "${soft_before_commit_warning}/verification.tmp" "${soft_before_commit_warning}/verification.md"
+awk '1; /^\|---\|---\|---\|---\|$/ && section=="change" {print "| before_commit | Exercise arbitrary soft gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
+mv "${soft_before_commit_warning}/verification.tmp" "${soft_before_commit_warning}/verification.md"
+bash scripts/validate-delivery-run.sh "${soft_before_commit_warning}" >/dev/null
+
+hard_gate_warning="$(copy_passing_fixture hard-gate-warning)"
+perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| \[hard\] Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | [hard] Run or record local validation, diff review, and sensitive information scan. | warn | reason:hard gate attempted soft warning | reason:hard gate cannot degrade to warning |/' "${hard_gate_warning}/verification.md"
+expect_failure "${hard_gate_warning}" "verification.md hook before_commit is hard gate and cannot use warn"
 
 misplaced_hook="$(copy_passing_fixture misplaced-hook)"
 perl -0pi -e 's/\n\| before_plan \|[^\n]*\n//' "${misplaced_hook}/plan.md"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | Misplaced hook row used to prove artifact ownership. | pass | decision:misplaced | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${misplaced_hook}/requirements.md" > "${misplaced_hook}/requirements.tmp"
+awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Misplaced hook row used to prove artifact ownership. | pass | decision:misplaced | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${misplaced_hook}/requirements.md" > "${misplaced_hook}/requirements.tmp"
 mv "${misplaced_hook}/requirements.tmp" "${misplaced_hook}/requirements.md"
 expect_failure "${misplaced_hook}" "requirements.md has misplaced hook id: before_plan"
 
 duplicate_hook="$(copy_passing_fixture duplicate-hook)"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | Duplicate hook row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${duplicate_hook}/plan.md" > "${duplicate_hook}/plan.tmp"
+awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Duplicate hook row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${duplicate_hook}/plan.md" > "${duplicate_hook}/plan.tmp"
 mv "${duplicate_hook}/plan.tmp" "${duplicate_hook}/plan.md"
 expect_failure "${duplicate_hook}" "plan.md hook before_plan appears more than once"
 

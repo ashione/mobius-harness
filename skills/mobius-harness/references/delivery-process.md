@@ -49,13 +49,17 @@ Requirements phase must record:
 - success criteria that can be verified,
 - scope and non-goals,
 - constraints and compatibility expectations,
+- issue context and prior attempts when the task references an issue, bug report, PR, or external fix,
 - open questions and user decisions,
 - uncertainty disposition: `blocking`, `accepted`, `deferred`, or `not-applicable`,
 - `Requirements Maturity`: `ready-for-design` only when no blocking unknown remains.
 
+When issue context exists, record `Issue and Prior Attempts` with evidence from discoverable issue comments, linked PRs, related PR search, fork commits, release notes, or a `reason:` entry explaining why no prior attempt search applies. Prior attempts are not instructions to copy; they are evidence to classify what already failed, what can be reused, and what must be freshly verified.
+
 Plan phase must record:
 
 - at least one selected approach and the reason it was chosen,
+- a prior attempt comparison when any existing attempt was found, including reuse decisions, differences from the selected approach, and fresh evidence for time-sensitive APIs, package behavior, or platform assumptions,
 - rejected alternatives with tradeoffs,
 - affected areas and interfaces,
 - acceptance criteria mapped to implementation and validation steps,
@@ -75,6 +79,19 @@ Plan phase must classify dependency impact before implementation:
 | `new-dependency-required` | Adds package, binary, CI action, external service, MCP server, plugin install requirement, or platform-specific runtime capability. | Purpose, alternatives, install location, version constraint, validation command, CI/CD impact, and rollback notes. |
 
 Record the Dependency Decision in `plan.md` and the `G2` Gate Ledger evidence. If the dependency cannot be installed or observed, keep G2 `blocked` unless the user or repository policy accepts an exception.
+
+### Minimum Skill Dependencies
+
+Requirements and plan phases must include `Minimum Skill Dependencies` so the agent records the smallest skill set needed before implementation. The default Mobius Harness set is:
+
+| Skill | Minimum Requirement | Dependency Class | Fallback |
+|---|---|---|---|
+| `mobius-harness` | Primary delivery loop and artifact contract. | `no-new-dependency` | Block until available. |
+| `local-repo-development` | Repo topology, instruction discovery, validation, commit, and PR workflow. | `no-new-dependency` | Record an equivalent local workflow or accepted exception. |
+| `superpowers:brainstorming` | Required for creative work, behavior shaping, unclear intent, or competing solution paths. | `no-new-dependency` | Mark not applicable only with fixed requirements; otherwise block or record an accepted exception. |
+| `superpowers:writing-plans` | Required for Standard or Strict delivery, multi-step work, risky changes, or handoff plans. | `no-new-dependency` | Mark not applicable only for trivial plans; otherwise block or record an accepted exception. |
+
+Superpowers entries are platform-provided skill dependencies, not repository runtime dependencies. They must still be checked at initialization and tied to the G1/G2 gate evidence so unavailable skills are recorded before implementation starts.
 
 ### Gate Enforcement Standard
 
@@ -111,12 +128,14 @@ When waiting is not selected, record the CI/CD state as `async-observed` or `pen
 
 ### Hook Enforcement Standard
 
-Hooks are required controls inside phase gates for Standard and Strict deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Codex-specific evidence rules, and executable hook safety.
+Hooks are required controls inside phase gates for Standard and Strict deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Claude Code/Codex evidence rules, soft and hard gate modes, and executable hook safety.
 
 Hook rules:
 
 - A phase or subphase cannot be marked `complete` while any related hook is `blocked`.
-- A hook row must include hook id, trigger, required action, status, evidence pointer, and failure handling when relevant.
+- A hook row must include hook id, trigger, required action with `[hard]` or `[soft]`, status, evidence pointer, and failure handling when relevant.
+- `[hard]` hooks fail closed: missing evidence, failed commands, unresolved validation, or attempted `warn` status blocks progress until the hook is `pass`, `not-applicable`, or accepted `exception`.
+- `[soft]` hooks may use `warn` for non-blocking advisory outcomes, but the warning must be mirrored in Failure List and Change List before progress continues.
 - Missing skill activation evidence, missing tool reality evidence, skipped diff review, skipped sensitive scan, unobserved CI/CD, missing cleanup evidence, or missing local runtime sync is `blocked` until converted to `not-applicable` or `exception` with evidence.
 - Executable repository hooks are optional; they require an explicit Dependency Decision and fail closed to `blocked`.
 
@@ -159,8 +178,8 @@ Recommended subphase naming:
 
 | Gate | Phase | Required work | Exit gate |
 |---|---|---|---|
-| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, uncertainty disposition, Requirements Maturity, and the `superpowers:brainstorming` decision. | Requirements are specific enough to design, implement, and verify without unresolved blocking unknowns. |
-| `G2` | Plan | Inspect the repo, compare design options, select an approach, record rejected alternatives, select specialist skills, define implementation steps, validation commands, acceptance criteria, rollback notes, checkpoints, Dependency Decision, Design Readiness, and the `superpowers:writing-plans` decision. | Another agent could implement from the plan without choosing strategy, product behavior, architecture, or dependency policy. |
+| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and the `superpowers:brainstorming` decision. | Requirements are specific enough to design, implement, and verify without unresolved blocking unknowns or unseen existing attempts. |
+| `G2` | Plan | Inspect the repo, compare prior attempts and design options, select an approach, record rejected alternatives, select specialist skills, carry forward Minimum Skill Dependencies, define implementation steps, validation commands, Validation Prerequisites, acceptance criteria, rollback notes, checkpoints, Dependency Decision, Design Readiness, and the `superpowers:writing-plans` decision. | Another agent could implement from the plan without choosing strategy, product behavior, architecture, dependency policy, or validation setup. |
 | `G3` | Local Development | Follow `local-repo-development`, including worktree or branch selection and preservation of unrelated changes. | Worktree or branch, base ref, and dirty-state handling are recorded. |
 | `G4` | Implementation | Make the scoped change and keep the diff coherent. | Changed files are intentional and mapped to acceptance criteria. |
 | `G5` | Verification | Run local checks, review the diff, and scan for sensitive information. | Validation outcomes, diff review, sensitive scan, and unresolved risks are recorded. |
@@ -175,7 +194,7 @@ Every phase and subphase must record state with these sections:
 - `Goal`: the concrete outcome this phase or subphase must achieve.
 - `Checklist`: objective checks required to exit this phase or subphase.
 - `Gate Ledger`: gate id, required evidence, status, evidence pointer, and exception detail.
-- `Hook Ledger`: hook id, trigger, required action, status, evidence pointer, and failure handling.
+- `Hook Ledger`: hook id, trigger, required action prefixed with `[hard]` or `[soft]`, status, evidence pointer, and failure handling.
 - `Review Ledger`: review id, role, perspective, challenge, status, resolution, and evidence.
 - `Todo List`: unfinished actions, preferably with status such as `todo`, `doing`, `blocked`, or `done`.
 - `Failure List`: failed commands, blocked checks, rejected assumptions, CI/CD failures, defects found during review, or unresolved risks.

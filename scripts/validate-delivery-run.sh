@@ -23,6 +23,15 @@ if [[ ! -d "${run_dir}" ]]; then
   exit 1
 fi
 
+run_dir_abs="$(cd "${run_dir}" && pwd)"
+delivery_runs_dir="$(dirname "${run_dir_abs}")"
+delivery_dir="$(dirname "${delivery_runs_dir}")"
+package_root="$(dirname "${delivery_dir}")"
+
+if [[ "$(basename "${delivery_runs_dir}")" != "runs" || "$(basename "${delivery_dir}")" != ".delivery" ]]; then
+  package_root="${repo_root}"
+fi
+
 required_files=(
   "requirements.md"
   "plan.md"
@@ -54,6 +63,12 @@ required_reviews=(
   report_delivery
   report_operations
   report_user
+)
+required_minimum_skill_dependencies=(
+  mobius-harness
+  local-repo-development
+  superpowers:brainstorming
+  superpowers:writing-plans
 )
 valid_statuses=" draft active blocked complete deferred "
 
@@ -145,6 +160,8 @@ require_artifact_sections() {
         "Risks"
         "Open Questions"
         "User Decisions"
+        "Issue and Prior Attempts"
+        "Minimum Skill Dependencies"
         "Uncertainty Register"
         "Requirements Maturity"
         "Superpowers Decisions"
@@ -154,12 +171,15 @@ require_artifact_sections() {
       sections=(
         "Repo Findings"
         "Specialist Skills"
+        "Minimum Skill Dependencies"
         "Superpowers Decisions"
+        "Prior Attempt Comparison"
         "Design Options"
         "Design Readiness"
         "Dependency Decision"
         "Implementation Steps"
         "Validation Strategy"
+        "Validation Prerequisites"
         "Acceptance Criteria"
         "Rollback Notes"
         "Checkpoints"
@@ -203,6 +223,45 @@ require_artifact_sections() {
   fi
 }
 
+require_minimum_skill_dependencies() {
+  local path="$1"
+  local file="$2"
+  local skill
+
+  case "${file}" in
+    requirements.md | plan.md) ;;
+    *) return 0 ;;
+  esac
+
+  for skill in "${required_minimum_skill_dependencies[@]}"; do
+    if ! awk -F'|' -v skill="${skill}" '
+      function trim(value) {
+        gsub(/^[ \t]+|[ \t]+$/, "", value)
+        return value
+      }
+
+      /^## Minimum Skill Dependencies/ {
+        section = 1
+        next
+      }
+
+      /^## / {
+        section = 0
+      }
+
+      section && /^\|/ && trim($2) == skill {
+        found = 1
+      }
+
+      END {
+        exit found ? 0 : 1
+      }
+    ' "${path}"; then
+      record_error "${file} missing minimum skill dependency: ${skill}"
+    fi
+  done
+}
+
 require_decision_content() {
   local path="$1"
   local file="$2"
@@ -216,6 +275,8 @@ require_decision_content() {
   case "${file}" in
     requirements.md)
       require_field_value "${path}" "${file}" "Brainstorming"
+      require_field_value "${path}" "${file}" "Prior Attempt Search"
+      require_field_value "${path}" "${file}" "Prior Attempt Evidence"
       require_field_value "${path}" "${file}" "Blocking Unknowns"
       require_field_value "${path}" "${file}" "Maturity Evidence"
 
@@ -232,9 +293,17 @@ require_decision_content() {
         cmd:* | file:* | url:* | decision:* | reason:*) ;;
         *) record_error "${file} Requirements Maturity evidence must start with cmd:, file:, url:, decision:, or reason:" ;;
       esac
+
+      prior_attempt_evidence="$(field_value "${path}" "Prior Attempt Evidence")"
+      case "${prior_attempt_evidence}" in
+        cmd:* | file:* | url:* | decision:* | reason:*) ;;
+        *) record_error "${file} Prior Attempt Evidence must start with cmd:, file:, url:, decision:, or reason:" ;;
+      esac
       ;;
     plan.md)
       require_field_value "${path}" "${file}" "Writing Plans"
+      require_field_value "${path}" "${file}" "Prior Attempt Disposition"
+      require_field_value "${path}" "${file}" "Freshness Evidence"
       require_field_value "${path}" "${file}" "Selected Approach"
       require_field_value "${path}" "${file}" "Rejected Alternatives"
       require_field_value "${path}" "${file}" "Acceptance Mapping"
@@ -267,6 +336,12 @@ require_decision_content() {
       case "${evidence_value}" in
         cmd:* | file:* | url:* | decision:* | reason:*) ;;
         *) record_error "${file} Dependency Decision evidence must start with cmd:, file:, url:, decision:, or reason:" ;;
+      esac
+
+      evidence_value="$(field_value "${path}" "Freshness Evidence")"
+      case "${evidence_value}" in
+        cmd:* | file:* | url:* | decision:* | reason:*) ;;
+        *) record_error "${file} Freshness Evidence must start with cmd:, file:, url:, decision:, or reason:" ;;
       esac
       ;;
   esac
@@ -351,6 +426,7 @@ for file in "${required_files[@]}"; do
   done
 
   require_artifact_sections "${path}" "${file}"
+  require_minimum_skill_dependencies "${path}" "${file}"
   require_decision_content "${path}" "${file}"
 
   artifact_status="$(sed -n 's/^Status:[[:space:]]*//p' "${path}" | head -n 1)"
@@ -613,6 +689,11 @@ for file in "${required_files[@]}"; do
           failure_has[hook] = 1
         }
       }
+      for (hook in warning_hook) {
+        if ($0 ~ hook) {
+          failure_has[hook] = 1
+        }
+      }
     }
 
     section == "change" && /^\|/ {
@@ -621,13 +702,26 @@ for file in "${required_files[@]}"; do
           change_has[hook] = 1
         }
       }
+      for (hook in warning_hook) {
+        if ($0 ~ hook) {
+          change_has[hook] = 1
+        }
+      }
     }
 
     ledger == "hook" && /^\|[ \t]*(before|after)_[a-z_]+[ \t]*\|/ {
       hook = trim($2)
+      required_action = trim($4)
       status_value = trim($5)
       evidence = trim($6)
       failure_handling = trim($7)
+      mode = ""
+
+      if (required_action ~ /^\[soft\][ \t]+/) {
+        mode = "soft"
+      } else if (required_action ~ /^\[hard\][ \t]+/) {
+        mode = "hard"
+      }
 
       if (seen_hook[hook]) {
         printf("ERROR: %s hook %s appears more than once\n", file, hook)
@@ -635,7 +729,12 @@ for file in "${required_files[@]}"; do
       }
       seen_hook[hook] = 1
 
-      if (status_value != "pass" && status_value != "not-applicable" && status_value != "exception" && status_value != "blocked") {
+      if (mode == "") {
+        printf("ERROR: %s hook %s missing gate mode prefix: [soft] or [hard]\n", file, hook)
+        invalid = 1
+      }
+
+      if (status_value != "pass" && status_value != "not-applicable" && status_value != "exception" && status_value != "blocked" && status_value != "warn") {
         printf("ERROR: %s hook %s has invalid status: %s\n", file, hook, status_value)
         invalid = 1
       }
@@ -643,6 +742,15 @@ for file in "${required_files[@]}"; do
       if (status_value == "blocked") {
         printf("ERROR: %s hook %s is blocked\n", file, hook)
         invalid = 1
+      }
+
+      if (status_value == "warn" && mode == "hard") {
+        printf("ERROR: %s hook %s is hard gate and cannot use warn\n", file, hook)
+        invalid = 1
+      }
+
+      if (status_value == "warn" && mode == "soft") {
+        warning_hook[hook] = 1
       }
 
       if (evidence == "" || evidence ~ /^<.*>$/) {
@@ -657,6 +765,11 @@ for file in "${required_files[@]}"; do
 
       if (status_value == "exception" && (failure_handling == "" || failure_handling ~ /^<.*>$/)) {
         printf("ERROR: %s hook %s exception missing failure handling\n", file, hook)
+        invalid = 1
+      }
+
+      if (status_value == "warn" && (failure_handling == "" || failure_handling ~ /^<.*>$/)) {
+        printf("ERROR: %s hook %s warning missing failure handling\n", file, hook)
         invalid = 1
       }
 
@@ -676,6 +789,16 @@ for file in "${required_files[@]}"; do
           invalid = 1
         }
       }
+      for (hook in warning_hook) {
+        if (!failure_has[hook]) {
+          printf("ERROR: %s hook %s warning not recorded in Failure List\n", file, hook)
+          invalid = 1
+        }
+        if (!change_has[hook]) {
+          printf("ERROR: %s hook %s warning not recorded in Change List\n", file, hook)
+          invalid = 1
+        }
+      }
       exit invalid ? 1 : 0
     }
   ' "${path}"; then
@@ -687,7 +810,7 @@ for file in "${required_files[@]}"; do
 
     if [[ "${evidence}" == file:* ]]; then
       evidence_path="${evidence#file:}"
-      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${run_dir}/${evidence_path}" ]]; then
+      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${package_root}/${evidence_path}" && ! -e "${run_dir_abs}/${evidence_path}" ]]; then
         echo "ERROR: ${file} gate ${gate} file evidence not found: ${evidence_path}"
         status=1
       fi
@@ -729,7 +852,7 @@ for file in "${required_files[@]}"; do
 
     if [[ "${evidence}" == file:* ]]; then
       evidence_path="${evidence#file:}"
-      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${run_dir}/${evidence_path}" ]]; then
+      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${package_root}/${evidence_path}" && ! -e "${run_dir_abs}/${evidence_path}" ]]; then
         echo "ERROR: ${file} hook ${hook} file evidence not found: ${evidence_path}"
         status=1
       fi
@@ -774,7 +897,7 @@ for file in "${required_files[@]}"; do
 
     if [[ "${evidence}" == file:* ]]; then
       evidence_path="${evidence#file:}"
-      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${run_dir}/${evidence_path}" ]]; then
+      if [[ ! -e "${evidence_path}" && ! -e "${repo_root}/${evidence_path}" && ! -e "${package_root}/${evidence_path}" && ! -e "${run_dir_abs}/${evidence_path}" ]]; then
         echo "ERROR: ${file} review ${review} file evidence not found: ${evidence_path}"
         status=1
       fi

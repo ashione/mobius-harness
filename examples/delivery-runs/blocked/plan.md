@@ -15,8 +15,11 @@ Show a complete plan gate while G1 remains blocked.
 
 - [x] Affected areas are identified.
 - [x] Specialist skills are selected or rejected with reason.
+- [x] Minimum Skill Dependencies are checked and carried forward from requirements.
 - [x] Implementation steps are ordered.
+- [x] Prior attempts are compared against the selected approach or marked not applicable with evidence.
 - [x] Validation strategy covers success criteria.
+- [x] Validation prerequisites are recorded before validation commands.
 - [x] Rollback or mitigation notes are recorded.
 - [x] Dependency Decision is recorded.
 - [x] `superpowers:writing-plans` is used or marked not applicable with evidence.
@@ -25,13 +28,13 @@ Show a complete plan gate while G1 remains blocked.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/blocked/plan.md | |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/blocked/plan.md | |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_plan | before G2 completion | Record skill activation, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/blocked/plan.md | |
+| before_plan | before G2 completion | [hard] Record skill activation, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/blocked/plan.md | |
 
 ### Review Ledger
 
@@ -66,10 +69,28 @@ Fixture uses committed example files.
 
 - `mobius-harness`: primary delivery loop.
 
+## Minimum Skill Dependencies
+
+| Skill | Minimum Requirement | Dependency Class | Evidence | Fallback |
+|---|---|---|---|---|
+| mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
+| local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
+| superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+
 ## Superpowers Decisions
 
 - Brainstorming: not-applicable, fixed fixture.
 - Writing Plans: not-applicable, fixed fixture.
+
+## Prior Attempt Comparison
+
+- Prior Attempt Disposition: not-applicable, because requirements found no issue-driven prior attempt.
+- Freshness Evidence: reason:fixture has no time-sensitive external API, package, or platform behavior.
+
+| Attempt | Useful Elements | Differences from Selected Approach | Action |
+|---|---|---|---|
+| Fixture scope | None | No prior attempt applies to a committed validator fixture | Continue with fixture validation |
 
 ## Design Options
 
@@ -101,6 +122,12 @@ Fixture uses committed example files.
 ## Validation Strategy
 
 Run `bash scripts/validate-delivery-run.sh examples/delivery-runs/blocked`.
+
+## Validation Prerequisites
+
+| Prerequisite | Applies To | Evidence | Fallback |
+|---|---|---|---|
+| Repository setup or generated artifacts | Validator fixture commands | reason:none required for committed fixture | record failed command, run the prerequisite, and rerun the validation command |
 
 ## Acceptance Criteria
 
