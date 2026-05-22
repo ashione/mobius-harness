@@ -165,7 +165,7 @@ hook_action() {
 }
 
 before_requirements_action="$(hook_action "Read user goal, repo instructions, relevant specs/docs, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision.")"
-before_plan_action="$(hook_action "Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision.")"
+before_plan_action="$(hook_action "Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision.")"
 before_edit_action="$(hook_action "Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes.")"
 after_edit_action="$(hook_action "Map changed files to acceptance criteria and check for unintended churn.")"
 before_commit_action="$(hook_action "Run or record local validation, diff review, and sensitive information scan.")"
@@ -318,6 +318,7 @@ Define the implementation plan after G1 is resolved.
 - [ ] Design options and rejected alternatives are recorded.
 - [ ] Design Readiness is \`ready-for-implementation\` or explicitly excepted.
 - [ ] Validation strategy covers success criteria.
+- [ ] Validation prerequisites are recorded before validation commands.
 - [ ] Rollback or mitigation notes are recorded.
 - [ ] Dependency Decision is recorded.
 - [ ] \`superpowers:writing-plans\` is used or marked not applicable with evidence.
@@ -326,7 +327,7 @@ Define the implementation plan after G1 is resolved.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
+| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
 
 ### Hook Ledger
 
@@ -408,6 +409,12 @@ TBD
 ## Validation Strategy
 
 TBD
+
+## Validation Prerequisites
+
+| Prerequisite | Applies To | Evidence | Fallback |
+|---|---|---|---|
+| Repository setup or generated artifacts | Validation commands that require setup before they can run cleanly | reason:none identified yet | record failed command, run the prerequisite, and rerun the validation command |
 
 ## Acceptance Criteria
 

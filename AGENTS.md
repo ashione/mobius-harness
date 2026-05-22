@@ -25,6 +25,7 @@ Before changing files, read the relevant constraints:
 - Mobius Harness phases must include adversarial Review Ledger checks with multiple roles or perspectives before phase results are treated as final.
 - Mobius Harness Hook Ledger rows are agent-runtime gates for Claude Code, Codex, or similar executors. Required Action values must start with `[hard]` or `[soft]`; hard gates cannot use `warn`, while soft-gate warnings must be mirrored in Failure List and Change List.
 - Mobius Harness requirements and plan artifacts must include Minimum Skill Dependencies, including `mobius-harness`, `local-repo-development`, `superpowers:brainstorming`, and `superpowers:writing-plans` with dependency class, evidence, and fallback.
+- Mobius Harness plan artifacts must include Validation Prerequisites for setup, generated artifacts, migrations, fixtures, or environment state required before validation commands can run cleanly.
 - When initializing a Mobius Harness Delivery Episode Package, use `scripts/init-delivery-run.sh`; generated hook gates default to `[soft]` unless the user or repository policy explicitly requires `[hard]`. Keep gate strength separate from runtime-specific hook wording: use `--runtime auto` by default, or pin `--runtime codex`, `--runtime claude-code`, `--runtime claude`, or `--runtime generic` when the executor must be explicit; `claude` normalizes to `claude-code` in generated artifacts.
 
 ## Local Development Workflow

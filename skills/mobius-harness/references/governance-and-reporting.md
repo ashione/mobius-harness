@@ -28,6 +28,7 @@ Delivery is done only when:
 - Requirements Maturity is `ready-for-design` or explicitly excepted with accepted risk,
 - Design Readiness is `ready-for-implementation` or explicitly excepted with accepted risk,
 - Minimum Skill Dependencies are recorded in requirements and plan, including Superpowers dependency handling,
+- Validation Prerequisites are recorded before validation commands are treated as final,
 - Superpowers brainstorming and writing-plans decisions are recorded for requirements and plan gates,
 - Dependency Decision is recorded for the plan gate, including evidence and fallback,
 - Gate Ledger rows `G1` through `G8` are all `pass`, `not-applicable`, or `exception`,

@@ -219,6 +219,24 @@ Failure signal:
 
 - Agent starts implementation without recording the minimum skill dependency table or without checking Superpowers dependency handling.
 
+## Scenario 6F: Validation Prerequisites Are Planned Before Checks
+
+Prompt:
+
+```text
+Run the repo validation. The first command fails because generated files are missing.
+```
+
+Expected behavior:
+
+- The plan includes `Validation Prerequisites`.
+- Generated files, setup commands, migrations, fixtures, or environment state required before validation are recorded before validation is treated as final.
+- If a command fails because a prerequisite was missing, the agent records the failure, runs the prerequisite, reruns the command, and keeps both pieces of evidence.
+
+Failure signal:
+
+- Agent reports validation failure or success without recording the missing prerequisite and rerun evidence.
+
 ## Scenario 7: Design Readiness Must Block Coding
 
 Prompt:

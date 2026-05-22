@@ -128,6 +128,7 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 - [ ] Design options and rejected alternatives are recorded.
 - [ ] Design Readiness is `ready-for-implementation` or explicitly excepted.
 - [ ] Validation strategy covers success criteria.
+- [ ] Validation prerequisites are recorded before validation commands.
 - [ ] Rollback or mitigation notes are recorded.
 - [ ] Dependency Decision is recorded.
 - [ ] `superpowers:writing-plans` is used or marked not applicable with evidence.
@@ -136,13 +137,13 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
+| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_plan | before G2 completion | [soft] <runtime> hook: Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
+| before_plan | before G2 completion | [soft] <runtime> hook: Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision; record runtime-specific evidence. | blocked | <evidence pointer> | <required if exception> |
 
 ### Review Ledger
 
@@ -208,6 +209,12 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 ## Implementation Steps
 
 ## Validation Strategy
+
+## Validation Prerequisites
+
+| Prerequisite | Applies To | Evidence | Fallback |
+|---|---|---|---|
+| Repository setup or generated artifacts | Validation commands that require setup before they can run cleanly | reason:none identified yet | record failed command, run the prerequisite, and rerun the validation command |
 
 ## Acceptance Criteria
 

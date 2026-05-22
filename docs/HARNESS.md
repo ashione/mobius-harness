@@ -61,6 +61,7 @@ Mobius Harness must:
 - default PR/MR CI/CD follow-up to asynchronous observation during small iterative updates unless the user requests full waiting, the delivery is about to merge or release, or policy requires terminal checks,
 - record Superpowers spec/plan artifacts or fallback decisions when those skills are used or unavailable,
 - record Minimum Skill Dependencies during requirements and planning, including `superpowers:brainstorming` and `superpowers:writing-plans` handling,
+- record Validation Prerequisites before treating validation command failures or reruns as final evidence,
 - record Requirements Maturity before design and Design Readiness before implementation,
 - record a Dependency Decision before implementation,
 - require evidence before marking any phase or delivery complete,

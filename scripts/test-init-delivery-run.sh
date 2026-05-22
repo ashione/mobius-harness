@@ -88,13 +88,23 @@ if ! grep -q -E '^\| G2 \| plan \| .*Minimum Skill Dependencies' "${run_dir}/pla
   exit 1
 fi
 
+if ! grep -q -F "## Validation Prerequisites" "${run_dir}/plan.md"; then
+  echo "ERROR: plan.md missing Validation Prerequisites"
+  exit 1
+fi
+
+if ! grep -q -E '^\| G2 \| plan \| .*Validation Prerequisites' "${run_dir}/plan.md"; then
+  echo "ERROR: G2 gate did not include validation prerequisite evidence"
+  exit 1
+fi
+
 if ! grep -q -E '^\| before_requirements \|[^|]+\| \[soft\].*Minimum Skill Dependencies' "${run_dir}/requirements.md"; then
   echo "ERROR: before_requirements hook did not include minimum skill dependency action"
   exit 1
 fi
 
-if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Minimum Skill Dependencies' "${run_dir}/plan.md"; then
-  echo "ERROR: before_plan hook did not include minimum skill dependency action"
+if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Minimum Skill Dependencies.*Validation Prerequisites' "${run_dir}/plan.md"; then
+  echo "ERROR: before_plan hook did not include minimum skill dependency and validation prerequisite actions"
   exit 1
 fi
 

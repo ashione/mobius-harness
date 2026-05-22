@@ -62,7 +62,7 @@ Load references only when needed:
    - Compare credible design options before selecting an approach; record rejected alternatives and why they were rejected.
    - Record Design Readiness as `ready-for-implementation` only when selected approach, affected areas, acceptance mapping, validation strategy, rollback notes, and start gate are explicit.
    - Record a Dependency Decision: `no-new-dependency`, `existing-toolchain`, or `new-dependency-required`, with reason, evidence, and fallback.
-   - Define implementation steps, validation commands, acceptance criteria, and delivery checkpoints.
+   - Define implementation steps, validation commands, validation prerequisites, acceptance criteria, and delivery checkpoints.
    - For long or risky tasks, create `.delivery/runs/<run-id>/plan.md`.
 6. Develop locally using `local-repo-development`:
    - Confirm the current directory is a git repository.
@@ -130,7 +130,7 @@ For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.
 Use these phase gates. Each phase may be split into smaller subphases when the work is large, risky, or blocked.
 
 1. `G1 Requirements`: goal, success criteria, scope, non-goals, risks, open questions, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and Superpowers brainstorming decision are explicit.
-2. `G2 Plan`: design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, validation commands, acceptance criteria, and Design Readiness are explicit.
+2. `G2 Plan`: design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, validation commands, Validation Prerequisites, acceptance criteria, and Design Readiness are explicit.
 3. `G3 Local Development`: worktree or branch choice is recorded and unrelated user changes are protected.
 4. `G4 Implementation`: changed files are intentional and mapped to accepted requirements.
 5. `G5 Verification`: local checks, diff review, and sensitive information scan are complete or explicitly marked unavailable with reason.
@@ -160,6 +160,7 @@ For every phase and subphase, maintain a status record with:
 - Requirements phases must record Requirements Maturity and cannot advance to design while blocking unknowns remain.
 - Plan phases must record Design Readiness and cannot advance to implementation while the selected approach, acceptance mapping, or validation strategy is unresolved.
 - Plan phases must record Dependency Decision, including evidence and fallback for unavailable tooling or platform skills.
+- Plan phases must record Validation Prerequisites for setup, generated artifacts, migrations, fixtures, or environment state required before validation commands can run cleanly.
 - A delivery is complete only when requirements, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported.
 - A delivery cannot be `complete` until gates `G1` through `G8` are `pass`, `not-applicable`, or `exception`.
 - A Standard or Strict delivery cannot be `complete` until required hooks from `hook-policy.md` are `pass`, `not-applicable`, `exception`, or valid soft-gate `warn`.
@@ -179,7 +180,7 @@ Use `draft`, `active`, `blocked`, `complete`, and `deferred` for phase status. I
 For long or risky work, maintain `.delivery/runs/<run-id>/` as a Delivery Episode Package with:
 
 - `requirements.md`: Goal, background, success criteria, scope, non-goals, risks, open questions, and user decisions.
-- `plan.md`: Repo findings, selected specialist skills, Minimum Skill Dependencies, Superpowers artifact paths or fallback, Dependency Decision, implementation steps, validation strategy, acceptance criteria, rollback notes, and checkpoints.
+- `plan.md`: Repo findings, selected specialist skills, Minimum Skill Dependencies, Superpowers artifact paths or fallback, Dependency Decision, implementation steps, validation strategy, Validation Prerequisites, acceptance criteria, rollback notes, and checkpoints.
 - `verification.md`: Commands run, outcomes, local failures and fixes, diff review notes, sensitive information scan result, PR/MR URL, and CI/CD runs.
 - `delivery-report.md`: Executive summary, changed files, implementation summary, validation summary, PR/MR and CI/CD status, risks, follow-ups, release notes, and version or release report notes when applicable.
 

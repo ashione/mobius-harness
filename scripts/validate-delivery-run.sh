@@ -177,6 +177,7 @@ require_artifact_sections() {
         "Dependency Decision"
         "Implementation Steps"
         "Validation Strategy"
+        "Validation Prerequisites"
         "Acceptance Criteria"
         "Rollback Notes"
         "Checkpoints"

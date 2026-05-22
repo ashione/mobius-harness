@@ -18,6 +18,7 @@ Show a fully satisfied plan gate.
 - [x] Minimum Skill Dependencies are checked and carried forward from requirements.
 - [x] Implementation steps are ordered.
 - [x] Validation strategy covers success criteria.
+- [x] Validation prerequisites are recorded before validation commands.
 - [x] Rollback or mitigation notes are recorded.
 - [x] Dependency Decision is recorded.
 - [x] `superpowers:writing-plans` is used or marked not applicable with evidence.
@@ -26,13 +27,13 @@ Show a fully satisfied plan gate.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/passing/plan.md | |
+| G2 | plan | Repo findings, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/passing/plan.md | |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_plan | before G2 completion | [hard] Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/passing/plan.md | |
+| before_plan | before G2 completion | [hard] Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/passing/plan.md | |
 
 ### Review Ledger
 
@@ -111,6 +112,12 @@ Fixture uses committed example files.
 ## Validation Strategy
 
 Run `bash scripts/validate-delivery-run.sh examples/delivery-runs/passing`.
+
+## Validation Prerequisites
+
+| Prerequisite | Applies To | Evidence | Fallback |
+|---|---|---|---|
+| Repository setup or generated artifacts | Validator fixture commands | reason:none required for committed fixture | record failed command, run the prerequisite, and rerun the validation command |
 
 ## Acceptance Criteria
 

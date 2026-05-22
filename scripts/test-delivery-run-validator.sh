@@ -76,6 +76,10 @@ missing_dependency="$(copy_passing_fixture missing-dependency)"
 perl -0pi -e 's/\n## Dependency Decision\n\n- Decision:.*?\n\n## Implementation Steps/\n## Implementation Steps/s' "${missing_dependency}/plan.md"
 expect_failure "${missing_dependency}" "plan.md missing marker: ## Dependency Decision"
 
+missing_validation_prerequisites="$(copy_passing_fixture missing-validation-prerequisites)"
+perl -0pi -e 's/\n## Validation Prerequisites\n\n\| Prerequisite \| Applies To \| Evidence \| Fallback \|\n\|---\|---\|---\|---\|\n(?:\|[^\n]*\n)+//' "${missing_validation_prerequisites}/plan.md"
+expect_failure "${missing_validation_prerequisites}" "plan.md missing marker: ## Validation Prerequisites"
+
 duplicate_gate="$(copy_passing_fixture duplicate-gate)"
 awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="gate" {print "| G2 | plan | Duplicate row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Gate Ledger$/ {section="gate"} /^### / && $0 !~ /^### Gate Ledger$/ {section=""}' "${duplicate_gate}/requirements.md" > "${duplicate_gate}/requirements.tmp"
 mv "${duplicate_gate}/requirements.tmp" "${duplicate_gate}/requirements.md"
