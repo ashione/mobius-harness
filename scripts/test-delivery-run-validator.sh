@@ -46,6 +46,10 @@ copy_passing_fixture() {
 bash scripts/validate-delivery-run.sh examples/delivery-runs/passing
 bash scripts/validate-delivery-run.sh examples/delivery-runs/exception
 
+lite_mode_fixture="$(copy_passing_fixture lite-mode)"
+perl -0pi -e 's/^Mode: full$/Mode: lite/mg' "${lite_mode_fixture}"/*.md
+bash scripts/validate-delivery-run.sh "${lite_mode_fixture}" >/dev/null
+
 external_root="${tmp_dir}/external-root"
 external_run_id="external-root-run"
 external_run_dir="${external_root}/.delivery/runs/${external_run_id}"
@@ -88,8 +92,40 @@ missing_validation_prerequisites="$(copy_passing_fixture missing-validation-prer
 perl -0pi -e 's/\n## Validation Prerequisites\n\n\| Prerequisite \| Applies To \| Evidence \| Fallback \|\n\|---\|---\|---\|---\|\n(?:\|[^\n]*\n)+//' "${missing_validation_prerequisites}/plan.md"
 expect_failure "${missing_validation_prerequisites}" "plan.md missing marker: ## Validation Prerequisites"
 
+missing_mode="$(copy_passing_fixture missing-mode)"
+perl -0pi -e 's/^Mode: full\n//m' "${missing_mode}/requirements.md"
+expect_failure "${missing_mode}" "requirements.md missing Mode header"
+
+invalid_mode="$(copy_passing_fixture invalid-mode)"
+perl -0pi -e 's/^Mode: full$/Mode: strict/m' "${invalid_mode}/plan.md"
+expect_failure "${invalid_mode}" "plan.md has invalid Mode: strict"
+
+missing_delegation_ledger="$(copy_passing_fixture missing-delegation-ledger)"
+perl -0pi -e 's/\n### Delegation Ledger\n\n\| Phase \| Subagent Role \| Candidate Skill \| Trigger \| Decision \| Evidence \| Handoff\/Return \|\n\|---[^\n]*\n(?:\|[^\n]*\n)+//' "${missing_delegation_ledger}/plan.md"
+expect_failure "${missing_delegation_ledger}" "plan.md missing marker: ### Delegation Ledger"
+
+blocked_delegation="$(copy_passing_fixture blocked-delegation)"
+perl -0pi -e 's/\| plan \| Domain Reviewer \| specialist skill \| API, refactor, bug, test, UI, SQL, security, operations, or commit-message work \| not-applicable \| reason:fixture has no product surface \| Return specialist findings or not-applicable evidence before phase completion \|/| plan | Domain Reviewer | specialist skill | API, refactor, bug, test, UI, SQL, security, operations, or commit-message work | blocked | reason:intentional delegation blocker | Return specialist findings before phase completion |/' "${blocked_delegation}/plan.md"
+expect_failure "${blocked_delegation}" "plan.md delegation specialist skill is blocked"
+
+invalid_delegation_decision="$(copy_passing_fixture invalid-delegation-decision)"
+perl -0pi -e 's/\| requirements \| Requirements Analyst \| superpowers:brainstorming \| Creative work, behavior shaping, unclear intent, or competing solution paths \| not-applicable \| decision:fixture requirements are fixed \| Return not-applicable evidence before G1 completion \|/| requirements | Requirements Analyst | superpowers:brainstorming | Creative work, behavior shaping, unclear intent, or competing solution paths | skipped | decision:fixture requirements are fixed | Return not-applicable evidence before G1 completion |/' "${invalid_delegation_decision}/requirements.md"
+expect_failure "${invalid_delegation_decision}" "requirements.md delegation superpowers:brainstorming has invalid decision: skipped"
+
+generic_delegation_role="$(copy_passing_fixture generic-delegation-role)"
+perl -0pi -e 's/\| report \| Delivery Reporter \| commit-message-writer, local-repo-development, or release\/report specialist \|/| report | subagent | commit-message-writer, local-repo-development, or release\/report specialist |/' "${generic_delegation_role}/delivery-report.md"
+expect_failure "${generic_delegation_role}" "delivery-report.md delegation commit-message-writer, local-repo-development, or release/report specialist has generic subagent role: subagent"
+
+insufficient_delegation_roles="$(copy_passing_fixture insufficient-delegation-roles)"
+perl -0pi -e 's/\| (requirements|plan|local-development|verification|report) \| [^|]+ \|/| $1 | Shared Analyst |/g' "${insufficient_delegation_roles}"/*.md
+expect_failure "${insufficient_delegation_roles}" "delivery run must include at least 4 distinct subagent roles in Delegation Ledger rows"
+
+unreturned_delegation="$(copy_passing_fixture unreturned-delegation)"
+perl -0pi -e 's/\| verification \| Verification Analyst \| test-case-generator or specialist verifier \| Validation gaps, regression risk, or surface-specific checks \| not-applicable \| reason:fixture is covered by validator command \| Return validation evidence before G5 completion \|/| verification | Verification Analyst | test-case-generator or specialist verifier | Validation gaps, regression risk, or surface-specific checks | use | reason:delegation still active | Return validation evidence before G5 completion |/' "${unreturned_delegation}/verification.md"
+expect_failure "${unreturned_delegation}" "verification.md delegation test-case-generator or specialist verifier is still in use"
+
 duplicate_gate="$(copy_passing_fixture duplicate-gate)"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="gate" {print "| G2 | plan | Duplicate row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Gate Ledger$/ {section="gate"} /^### / && $0 !~ /^### Gate Ledger$/ {section=""}' "${duplicate_gate}/requirements.md" > "${duplicate_gate}/requirements.tmp"
+awk '1; /^\|---/ && section=="gate" {print "| G2 | plan | Duplicate row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Gate Ledger$/ {section="gate"} /^### / && $0 !~ /^### Gate Ledger$/ {section=""}' "${duplicate_gate}/requirements.md" > "${duplicate_gate}/requirements.tmp"
 mv "${duplicate_gate}/requirements.tmp" "${duplicate_gate}/requirements.md"
 expect_failure "${duplicate_gate}" "Gate Ledger row for G2 appears more than once in delivery run"
 
@@ -114,7 +150,7 @@ perl -0pi -e 's/- Readiness: `ready-for-implementation`/- Readiness: `accepted-r
 expect_failure "${unaccepted_design_risk}" "plan.md Design Readiness accepted-risk requires G2 exception"
 
 missing_hook_ledger="$(copy_passing_fixture missing-hook-ledger)"
-perl -0pi -e 's/\n### Hook Ledger\n\n\| Hook \| Trigger \| Required Action \| Status \| Evidence \| Failure Handling \|\n\|---\|---\|---\|---\|---\|---\|\n\| before_plan \|[^\n]*\n//' "${missing_hook_ledger}/plan.md"
+perl -0pi -e 's/\n### Hook Ledger\n\n\| Hook \| Trigger \| Required Action \| Status \| Evidence \| Failure Handling \|\n\|---[^\n]*\n\| before_plan \|[^\n]*\n//' "${missing_hook_ledger}/plan.md"
 expect_failure "${missing_hook_ledger}" "plan.md missing marker: ### Hook Ledger"
 
 blocked_hook="$(copy_passing_fixture blocked-hook)"
@@ -127,17 +163,17 @@ expect_failure "${missing_gate_mode}" "verification.md hook before_commit missin
 
 soft_gate_warning="$(copy_passing_fixture soft-gate-warning)"
 perl -0pi -e 's/\| after_pr \| after PR\/MR creation or not-applicable decision \| \[soft\] Record PR\/MR URL or not-applicable reason, CI\/CD observation plan, terminal check state, and failure follow-up\. \| not-applicable \| reason:fixture is validated by repository CI when committed \| \|/| after_pr | after PR\/MR creation or not-applicable decision | [soft] Record PR\/MR URL or not-applicable reason, CI\/CD observation plan, terminal check state, and failure follow-up. | warn | reason:soft agent gate recorded async CI warning | reason:soft warning does not block final delivery |/' "${soft_gate_warning}/verification.md"
-awk '1; /^\|---\|---\|---\|---\|---\|$/ && section=="failure" {print "| after_pr | Soft gate warning documents async CI observation without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
+awk '1; /^\|---/ && section=="failure" {print "| after_pr | Soft gate warning documents async CI observation without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
 mv "${soft_gate_warning}/verification.tmp" "${soft_gate_warning}/verification.md"
-awk '1; /^\|---\|---\|---\|---\|$/ && section=="change" {print "| after_pr | Exercise soft agent gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
+awk '1; /^\|---/ && section=="change" {print "| after_pr | Exercise soft agent gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_gate_warning}/verification.md" > "${soft_gate_warning}/verification.tmp"
 mv "${soft_gate_warning}/verification.tmp" "${soft_gate_warning}/verification.md"
 bash scripts/validate-delivery-run.sh "${soft_gate_warning}" >/dev/null
 
 soft_before_commit_warning="$(copy_passing_fixture soft-before-commit-warning)"
 perl -0pi -e 's/\| before_commit \| before commit or PR\/MR preparation \| \[hard\] Run or record local validation, diff review, and sensitive information scan\. \| pass \| cmd:bash scripts\/validate-delivery-run\.sh examples\/delivery-runs\/passing \| \|/| before_commit | before commit or PR\/MR preparation | [soft] Run or record local validation, diff review, and sensitive information scan. | warn | reason:soft before_commit warning recorded | reason:soft warning does not block final delivery |/' "${soft_before_commit_warning}/verification.md"
-awk '1; /^\|---\|---\|---\|---\|---\|$/ && section=="failure" {print "| before_commit | Soft gate warning documents validation warning without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
+awk '1; /^\|---/ && section=="failure" {print "| before_commit | Soft gate warning documents validation warning without blocking final delivery | Fixture soft gate warning | Recorded as non-blocking warning | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
 mv "${soft_before_commit_warning}/verification.tmp" "${soft_before_commit_warning}/verification.md"
-awk '1; /^\|---\|---\|---\|---\|$/ && section=="change" {print "| before_commit | Exercise arbitrary soft gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
+awk '1; /^\|---/ && section=="change" {print "| before_commit | Exercise arbitrary soft gate warning path | file:examples/delivery-runs/passing/verification.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${soft_before_commit_warning}/verification.md" > "${soft_before_commit_warning}/verification.tmp"
 mv "${soft_before_commit_warning}/verification.tmp" "${soft_before_commit_warning}/verification.md"
 bash scripts/validate-delivery-run.sh "${soft_before_commit_warning}" >/dev/null
 
@@ -147,17 +183,17 @@ expect_failure "${hard_gate_warning}" "verification.md hook before_commit is har
 
 misplaced_hook="$(copy_passing_fixture misplaced-hook)"
 perl -0pi -e 's/\n\| before_plan \|[^\n]*\n//' "${misplaced_hook}/plan.md"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Misplaced hook row used to prove artifact ownership. | pass | decision:misplaced | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${misplaced_hook}/requirements.md" > "${misplaced_hook}/requirements.tmp"
+awk '1; /^\|---/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Misplaced hook row used to prove artifact ownership. | pass | decision:misplaced | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${misplaced_hook}/requirements.md" > "${misplaced_hook}/requirements.tmp"
 mv "${misplaced_hook}/requirements.tmp" "${misplaced_hook}/requirements.md"
 expect_failure "${misplaced_hook}" "requirements.md has misplaced hook id: before_plan"
 
 duplicate_hook="$(copy_passing_fixture duplicate-hook)"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|$/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Duplicate hook row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${duplicate_hook}/plan.md" > "${duplicate_hook}/plan.tmp"
+awk '1; /^\|---/ && section=="hook" {print "| before_plan | before G2 completion | [hard] Duplicate hook row used to prove package-level uniqueness. | pass | decision:duplicate | |"} /^### Hook Ledger$/ {section="hook"} /^### / && $0 !~ /^### Hook Ledger$/ {section=""}' "${duplicate_hook}/plan.md" > "${duplicate_hook}/plan.tmp"
 mv "${duplicate_hook}/plan.tmp" "${duplicate_hook}/plan.md"
 expect_failure "${duplicate_hook}" "plan.md hook before_plan appears more than once"
 
 missing_review_ledger="$(copy_passing_fixture missing-review-ledger)"
-perl -0pi -e 's/\n### Review Ledger\n\n\| Review \| Role \| Perspective \| Challenge \| Status \| Resolution \| Evidence \|\n\|---\|---\|---\|---\|---\|---\|---\|\n\| plan_architecture \|[^\n]*\n\| plan_validation \|[^\n]*\n\| plan_risk \|[^\n]*\n//' "${missing_review_ledger}/plan.md"
+perl -0pi -e 's/\n### Review Ledger\n\n\| Review \| Role \| Perspective \| Challenge \| Status \| Resolution \| Evidence \|\n\|---[^\n]*\n\| plan_architecture \|[^\n]*\n\| plan_validation \|[^\n]*\n\| plan_risk \|[^\n]*\n//' "${missing_review_ledger}/plan.md"
 expect_failure "${missing_review_ledger}" "plan.md missing marker: ### Review Ledger"
 
 blocked_review="$(copy_passing_fixture blocked-review)"
@@ -166,20 +202,20 @@ expect_failure "${blocked_review}" "verification.md review verification_ci is bl
 
 misplaced_review="$(copy_passing_fixture misplaced-review)"
 perl -0pi -e 's/\n\| plan_architecture \|[^\n]*\n//' "${misplaced_review}/plan.md"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|---\|$/ && section=="review" {print "| plan_architecture | Architecture | Misplaced review used to prove artifact ownership. | Does ownership validation reject this row? | pass | Ownership validation should fail before delivery completes. | decision:misplaced |"} /^### Review Ledger$/ {section="review"} /^### / && $0 !~ /^### Review Ledger$/ {section=""}' "${misplaced_review}/requirements.md" > "${misplaced_review}/requirements.tmp"
+awk '1; /^\|---/ && section=="review" {print "| plan_architecture | Architecture | Misplaced review used to prove artifact ownership. | Does ownership validation reject this row? | pass | Ownership validation should fail before delivery completes. | decision:misplaced |"} /^### Review Ledger$/ {section="review"} /^### / && $0 !~ /^### Review Ledger$/ {section=""}' "${misplaced_review}/requirements.md" > "${misplaced_review}/requirements.tmp"
 mv "${misplaced_review}/requirements.tmp" "${misplaced_review}/requirements.md"
 expect_failure "${misplaced_review}" "requirements.md has misplaced review id: plan_architecture"
 
 duplicate_review="$(copy_passing_fixture duplicate-review)"
-awk '1; /^\|---\|---\|---\|---\|---\|---\|---\|$/ && section=="review" {print "| plan_architecture | Architecture | Duplicate review used to prove uniqueness. | Does package-level uniqueness reject this row? | pass | Duplicate review should fail validation. | decision:duplicate |"} /^### Review Ledger$/ {section="review"} /^### / && $0 !~ /^### Review Ledger$/ {section=""}' "${duplicate_review}/plan.md" > "${duplicate_review}/plan.tmp"
+awk '1; /^\|---/ && section=="review" {print "| plan_architecture | Architecture | Duplicate review used to prove uniqueness. | Does package-level uniqueness reject this row? | pass | Duplicate review should fail validation. | decision:duplicate |"} /^### Review Ledger$/ {section="review"} /^### / && $0 !~ /^### Review Ledger$/ {section=""}' "${duplicate_review}/plan.md" > "${duplicate_review}/plan.tmp"
 mv "${duplicate_review}/plan.tmp" "${duplicate_review}/plan.md"
 expect_failure "${duplicate_review}" "plan.md review plan_architecture appears more than once"
 
 mirrored_review_exception="$(copy_passing_fixture mirrored-review-exception)"
 perl -0pi -e 's/\| requirements_risk \| Risk \| Ambiguity and failure modes \| Are blocking unknowns resolved or explicitly accepted\? \| pass \| No blocking fixture unknowns remain\. \| decision:fixture \|/| requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | exception | Accepted fixture risk for review exception test. | decision:fixture |/' "${mirrored_review_exception}/requirements.md"
-awk '1; /^\|---\|---\|---\|---\|---\|$/ && section=="failure" {print "| requirements_risk | Demonstrates review exception handling | Fixture review exception | Accepted for validator regression | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${mirrored_review_exception}/requirements.md" > "${mirrored_review_exception}/requirements.tmp"
+awk '1; /^\|---/ && section=="failure" {print "| requirements_risk | Demonstrates review exception handling | Fixture review exception | Accepted for validator regression | accepted |"} /^### Failure List$/ {section="failure"} /^### / && $0 !~ /^### Failure List$/ {section=""}' "${mirrored_review_exception}/requirements.md" > "${mirrored_review_exception}/requirements.tmp"
 mv "${mirrored_review_exception}/requirements.tmp" "${mirrored_review_exception}/requirements.md"
-awk '1; /^\|---\|---\|---\|---\|$/ && section=="change" {print "| requirements_risk | Exercise review exception path | file:examples/delivery-runs/passing/requirements.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${mirrored_review_exception}/requirements.md" > "${mirrored_review_exception}/requirements.tmp"
+awk '1; /^\|---/ && section=="change" {print "| requirements_risk | Exercise review exception path | file:examples/delivery-runs/passing/requirements.md | decision:fixture |"} /^### Change List$/ {section="change"} /^### / && $0 !~ /^### Change List$/ {section=""}' "${mirrored_review_exception}/requirements.md" > "${mirrored_review_exception}/requirements.tmp"
 mv "${mirrored_review_exception}/requirements.tmp" "${mirrored_review_exception}/requirements.md"
 bash scripts/validate-delivery-run.sh "${mirrored_review_exception}" >/dev/null
 

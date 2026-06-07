@@ -1,73 +1,73 @@
 # Skills Hub
 
-可复用的 Skill Suite 仓库，统一维护技能提示词，软链接到任意 Agent 平台（Claude / Codex / OpenClaw）。
+Reusable skill suite repository for maintaining agent skill instructions and linking them into agent platforms such as Claude, Codex, and OpenClaw.
 
 ## Mobius Harness
 
-`mobius-harness` 是本仓库的端到端交付主入口。用户可以用它驱动同一个 agent 完成完整软件交付流程：
+`mobius-harness` is the end-to-end delivery entrypoint for this repository. It guides one accountable agent through a complete software delivery loop:
 
-1. 需求分析
-2. 交付计划
-3. 本地 worktree 开发
-4. 实现与本地验证
-5. PR/MR 创建与 CI/CD 跟踪
-6. 交付报告
+1. Requirements analysis
+2. Delivery planning
+3. Local worktree development
+4. Implementation and local validation
+5. PR/MR creation and CI/CD tracking
+6. Delivery reporting
 
-其他 skills 是 Mobius Harness 可按需调用的专业能力，例如：
+Other skills are specialist capabilities that Mobius Harness can delegate to when their evidence is needed:
 
-- `superpowers:brainstorming`：创意工作、功能塑形、需求意图不清或存在多个方案时，用于先形成可审查设计
-- `superpowers:writing-plans`：Standard / Strict 交付或多步骤实现中，用于生成可执行计划
-- `local-repo-development`：单仓/多仓拓扑识别、仓库级 agent 指令与 spec/docs 发现、worktree、提交前 review、敏感信息扫描、CI/CD 跟踪
-- `refactor-planner`：按重构范围和范式对比生成低风险阶段计划
-- `api-design-review`：按 API 形态和变更风险审查契约
-- `test-case-generator`：按测试范围和 case family 生成可执行测试矩阵
-- `frontend-ux-polish`：按界面类型和审计维度打磨前端体验
-- `bug-triage`：按 bug class、复现策略、严重度和证据进行分级
-- `incident-postmortem`：按 incident class 和 cause analysis 生成复盘
-- `commit-message-writer`：提交信息生成
+- `superpowers:brainstorming`: shape creative work, feature behavior, unclear intent, or competing solution paths into a reviewable design.
+- `superpowers:writing-plans`: create an executable plan for full deliveries or multi-step implementation.
+- `local-repo-development`: inspect repo topology, agent instructions, specs/docs, worktree state, pre-commit review, sensitive information scans, and CI/CD status.
+- `refactor-planner`: classify refactor scope and produce a lower-risk phased plan.
+- `api-design-review`: review API contracts by API shape and compatibility risk.
+- `test-case-generator`: produce executable test matrices by test scope and case family.
+- `frontend-ux-polish`: review frontend experience by surface and audit dimension.
+- `bug-triage`: classify bugs by bug class, reproduction strategy, severity, and evidence.
+- `incident-postmortem`: write incident reviews by incident class and cause analysis.
+- `commit-message-writer`: produce commit messages.
 
-## 依赖判断
+## Dependency Decisions
 
-修改本仓库文档、skills 或 harness 流程时，必须先判断是否需要新增依赖，而不是默认引入工具或包：
+Before changing repository documentation, skills, or harness workflow, decide whether the work introduces a dependency instead of assuming new tools or packages are acceptable:
 
-- 仅引用已经由目标 agent 平台提供的 skill、plugin 或本地能力，例如 `superpowers:brainstorming`、`superpowers:writing-plans`，不视为仓库运行时依赖；但必须在相关 gate 或计划中记录使用条件和不可用时的处理方式。
-- 使用已有仓库脚本、POSIX shell、Git、GitHub CLI、Python 标准库或 CI 已安装工具，视为现有开发工具链；若 README、docs 或脚本开始强制依赖它们，应写明验证命令和失败时的替代路径。
-- 新增 npm、Python、Go、Rust 包、系统二进制、CI action、外部服务、MCP server、plugin 安装要求或平台专属能力，视为新增依赖；必须在计划中说明用途、替代方案、安装位置、版本约束、验证命令、CI/CD 影响和回滚方式。
-- 如果只是为了增强文档流程约束，优先用 Markdown gate、artifact template 或轻量脚本表达；只有当文档约束无法被审计或复现时，才考虑新增依赖。
+- Referencing platform-provided skills, plugins, or local agent capabilities such as `superpowers:brainstorming` and `superpowers:writing-plans` is `no-new-dependency`; still record when they are used, not applicable, unavailable, or excepted in the relevant gate or plan.
+- Using existing repository scripts, POSIX shell, Git, GitHub CLI, the Python standard library, or tools already required by CI is `existing-toolchain`; if README, docs, or scripts start requiring them, document the validation command and fallback path.
+- Adding npm, Python, Go, or Rust packages, system binaries, CI actions, external services, MCP servers, plugin install requirements, or platform-specific runtime capabilities is `new-dependency-required`; document purpose, alternatives, install location, version constraints, validation, CI/CD impact, and rollback.
+- For documentation-only process constraints, prefer Markdown gates, artifact templates, or lightweight scripts. Add a dependency only when the constraint cannot otherwise be audited or reproduced.
 
-依赖判断应写成可审查记录，至少包含：
+A dependency decision record must include:
 
-- `Decision`：`no-new-dependency`、`existing-toolchain` 或 `new-dependency-required`。
-- `Reason`：为什么现有 Markdown、模板、脚本或平台能力足够或不足。
-- `Evidence`：相关 skill、脚本、命令、CI job、文档链接或失败记录。
-- `Fallback`：依赖或平台能力不可用时，agent 应该阻塞、降级、跳过还是记录 exception。
+- `Decision`: `no-new-dependency`, `existing-toolchain`, or `new-dependency-required`.
+- `Reason`: why existing Markdown, templates, scripts, or platform capabilities are enough or insufficient.
+- `Evidence`: related skills, scripts, commands, CI jobs, docs, or failure records.
+- `Fallback`: whether the agent should block, degrade, skip, or record an exception when the dependency or platform capability is unavailable.
 
-本次引入 `superpowers:brainstorming` 和 `superpowers:writing-plans` 属于 `no-new-dependency`：它们是目标 agent 平台可选加载的流程能力，仓库不新增包、二进制、CI action 或运行时安装步骤。Mobius Harness 只要求在 G1/G2 gate 中记录是否使用、为何不适用或如何处理不可用状态。
+The current use of `superpowers:brainstorming` and `superpowers:writing-plans` is `no-new-dependency`: they are optional platform-loaded process skills. This repository does not add packages, binaries, CI actions, or runtime install steps for them. Mobius Harness only requires G1/G2 gate evidence that records whether they were used, why they were not applicable, or how unavailable state was handled.
 
-## Skill 标准
+## Skill Standards
 
-本仓库的 skill 不是泛用提示词集合，而是可复用的工作标准。新增或修改 skill 时必须满足：
+Skills in this repository are reusable work standards, not generic prompt snippets. When adding or changing a skill:
 
-- `SKILL.md` 和 `skill.json` 必须同步更新；`description` 必须完全一致。
-- `description` 使用 `Use when...` 写法，只描述触发条件，不总结执行流程。
-- 非平凡 skill 必须包含适用范围、分类矩阵或决策表，例如重构范围、API surface、SQL workload、测试 scope、UI surface、bug/incident class。
-- 指令必须可执行，避免只写“保持一致”“优化体验”“注意风险”这类无对象标准。
-- 输出标准必须明确必填章节、证据要求、反例约束和不能宣称的内容。
-- 示例必须体现期望输出形态；不要只给一句泛化结论。
-- 复杂细节优先放在 `references/`，`SKILL.md` 保留核心触发、分类、流程和产出标准。
+- Keep `SKILL.md` and `skill.json` synchronized; their descriptions must match exactly.
+- Write descriptions in the `Use when...` form and describe triggering conditions only.
+- For nontrivial skills, include concrete scope classification, decision tables, risk classes, or pattern comparisons.
+- Make instructions actionable; avoid vague standards such as "stay consistent", "improve quality", or "handle edge cases" unless the exact objects and checks are named.
+- Define required output sections, evidence requirements, anti-patterns, and unsupported claims.
+- Show the expected output shape in examples; do not use only a one-line conclusion.
+- Put large details under `references/`; keep `SKILL.md` focused on triggers, classification, workflow, and output standards.
 
-本仓库已有的专业 skills 都应遵循“先分类，再选择范式，再输出可验证结果”的原则。
+Existing specialist skills should follow the principle: classify first, choose the pattern second, and produce verifiable output.
 
-## 本地开发约束
+## Local Development Constraints
 
-本仓库自身也遵循 `local-repo-development` 的规则：
+This repository follows the `local-repo-development` workflow:
 
-- 修改前先读取仓库级约束文件，包括 `AGENTS.md`、`README.md`、`docs/SKILL_SPEC.md`，以及相关 skill 自身的 `SKILL.md` / `skill.json`。
-- 如果任务涉及 Mobius Harness，还应按需读取 `docs/HARNESS.md` 和 `skills/mobius-harness/references/` 下的相关文件。
-- 每个 skill 目录都视为独立能力单元；修改正文时必须判断是否需要同步 `skill.json` 的结构化字段、instructions、examples。
-- 当一次修改产生了新的持久标准，应更新 `README.md`、`AGENTS.md`、`docs/SKILL_SPEC.md` 或相关 skill 文档，不能只留在对话里。
+- Before editing, read repository instruction files including `AGENTS.md`, `README.md`, `docs/SKILL_SPEC.md`, and the relevant skill's `SKILL.md` / `skill.json`.
+- If the task involves Mobius Harness, also read `docs/HARNESS.md` and the relevant files under `skills/mobius-harness/references/`.
+- Treat each skill directory as an independent capability unit; when changing prose, decide whether `skill.json` instructions, examples, or metadata must also change.
+- When a change creates a durable repository standard, update `README.md`, `AGENTS.md`, `docs/SKILL_SPEC.md`, or the relevant skill docs instead of leaving the rule only in conversation.
 
-长任务默认可在本地维护 Delivery Episode Package：
+Long tasks may maintain a local Delivery Episode Package:
 
 ```text
 .delivery/runs/<run-id>/
@@ -77,41 +77,123 @@
   delivery-report.md
 ```
 
-`.delivery/runs/` 默认不提交到 git。
+`.delivery/runs/` is not committed by default.
 
-可以用本仓库脚本初始化交付产物、Hook 门禁骨架，以及目标仓库内的 harness-owned 门禁脚本和 hook 配置：
+Initialize delivery artifacts, Hook Ledger scaffolding, and harness-owned hook scripts/config in a target repository with:
 
 ```bash
-bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
+bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--mode full|lite] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
 ```
 
-脚本会创建 `.delivery/runs/<run-id>/` 下的四个 artifact，并预置 `G1`-`G8`、Hook Ledger 和 Review Ledger 行。脚本还会创建 `.delivery/hooks/config.json`、`.delivery/hooks/agent_gate.sh` 和 8 个 `.delivery/hooks/<hook-id>.sh` 可执行门禁脚本；这些脚本读取当前 run 的 Hook Ledger 状态，遇到 `blocked`、缺失行、缺失 evidence artifact 或硬门禁 `warn` 时失败。脚本会参考已有 agent 门禁系统的 project-level settings 形态，为 Claude Code 写入 `.claude/settings.json` 的 `PreToolUse` / `matcher: Bash` / command hook，为 Codex 写入 `.codex/settings.json` 的同形 hook；`generic` runtime 会同时写入两者。目标目录是 git repo 时，脚本会把 `.delivery/`、`.claude/settings*.json` 和 `.codex/settings*.json` 写入目标 repo 的 `.git/info/exclude`，这是本地排除规则，不会进入 MR；如果目标 repo 已经跟踪了 `.claude/settings.json` 或 `.codex/settings.json`，脚本改写到对应 `settings.local.json`，避免修改已跟踪配置。初始化时必须能看出门禁类型和 agent runtime：`--gate-type` 控制软/硬门禁，默认生成 `[soft]` 软门禁；`--runtime` 控制专有 hook 文案和配置，默认 `auto`，会根据当前运行时环境识别 Codex 或 Claude Code，无法确认时回退 `generic`。需要阻塞式门禁时显式传 `--gate-type hard`；需要指定平台语义时显式传 `--runtime codex`、`--runtime claude-code` 或 `--runtime generic`。`--runtime claude` 是 `--runtime claude-code` 的输入别名，生成 artifact 时仍规范化为 `Runtime: claude-code`。初始化产物是 active/draft 状态，默认包含 blocked gate/hook/review；它用于开始交付，不代表验证完成。完成 Standard / Strict 交付前仍需运行 `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>`。
+The script creates the four artifacts under `.delivery/runs/<run-id>/` and prepopulates `Mode`, `G1`-`G8`, Delegation Ledger, Hook Ledger, and Review Ledger rows. It also creates `.delivery/hooks/config.json`, `.delivery/hooks/agent_gate.sh`, and eight executable `.delivery/hooks/<hook-id>.sh` gate scripts. Those scripts read the active run's Hook Ledger and fail when a row is missing, `blocked`, points to a missing evidence artifact, or uses `warn` on a hard gate.
 
-交付过程必须遵循 Mobius Harness 的阻塞式阶段门禁。任务开始时选择 `Lightweight`、`Standard` 或 `Strict` 模式；大任务可拆成子阶段。每个阶段和子阶段都必须记录 Goal、Checklist、Gate Ledger、Hook Ledger、Review Ledger、Todo List、Failure List 和 Change List。需求阶段必须记录 Issue and Prior Attempts、Minimum Skill Dependencies 和 Requirements Maturity：当任务来自 issue、PR、fork、commit 或旧修复时，应搜索已有尝试并记录证据；无可查来源时也要写明 reason。方案阶段必须继续记录 Prior Attempt Comparison、Minimum Skill Dependencies、Validation Prerequisites 和 Design Readiness；既有尝试不能直接照搬，必须比较可复用项、差异、过期假设，并对 API、包行为或平台能力做 fresh evidence 验证。最小依赖表必须包含 `mobius-harness`、`local-repo-development`、`superpowers:brainstorming` 和 `superpowers:writing-plans` 的使用条件、依赖分类、证据和 fallback；验证前置表必须记录运行验证命令前需要的生成物、初始化、迁移、fixture 或环境状态，以及缺失时如何恢复和重跑。不确定性未收敛时不得进入编码。Hook Ledger 支持 Claude Code / Codex 运行时门禁，Required Action 必须同时体现两个维度：以 `[hard]` 或 `[soft]` 标注阻断语义，并用 Codex hook、Claude Code hook 或 Generic agent hook 标注运行时证据口径。硬门禁不能降级为 `warn`，软门禁可以 `warn` 但必须在 Failure List 和 Change List 留审计记录。每个阶段的最终结果产出或进入下一执行阶段前，必须完成多角色、多视角的 Review Ledger 对抗验证。任何 complete 状态都必须有 evidence，且不能存在 `blocked` gate、hook 或 review。交付产物必须遵循 [docs/HARNESS.md](docs/HARNESS.md) 中的 artifact 标准。
+The generated scaffold follows project-level agent hook settings:
 
-PR/MR 小步快速迭代时，CI/CD 跟踪默认异步：记录 head SHA、检查链接和下一次观察点后即可把控制权交还用户。只有用户明确要求完整等待、即将 merge、即将 release、仓库策略要求终态检查，或已观察到失败且用户选择等待下一轮时，才同步等待 CI/CD 终态。不得在当前 head SHA 的检查未终态成功前宣称 CI/CD 已通过。
+- Claude Code receives a `.claude/settings.json` `PreToolUse` / `matcher: Bash` command hook.
+- Codex receives the same hook shape under `.codex/settings.json`.
+- `generic` writes both.
+- In git repositories, `.delivery/`, `.claude/settings*.json`, and `.codex/settings*.json` are added to `.git/info/exclude` so they do not enter PR/MR diffs.
+- If `.claude/settings.json` or `.codex/settings.json` is already tracked, initialization writes `settings.local.json` instead of modifying the tracked file.
 
-如果使用 `.delivery/runs/<run-id>/`，完成前运行：
+Initialization settings:
+
+- `--mode` records `full` or `lite`; default is `full`.
+- `--gate-type` selects `[soft]` or `[hard]` hook gates; default is `[soft]`.
+- `--runtime auto` detects Codex or Claude Code from runtime environment signals and falls back to `generic`.
+- `--runtime codex`, `--runtime claude-code`, or `--runtime generic` pins runtime wording and evidence expectations.
+- `--runtime claude` is accepted as an alias and normalizes to `Runtime: claude-code`.
+- Initialized artifacts are active/draft starting state with blocked gate/delegation/hook/review rows; initialization is not validation.
+
+Run final full-delivery validation with:
 
 ```bash
 bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>
 ```
 
-仓库包含 `examples/delivery-runs/` 作为可执行样例：
+### Delivery Flow
 
-- `passing`：完整通过的 Delivery Episode Package。
-- `exception`：包含已接受 exception，并在 Failure List / Change List 中同步记录。
-- `blocked`：包含 blocked gate 的负例，validator 必须失败。
+Mobius Harness uses ordered blocking phase gates. Choose `lite` or `full` at the start. Legacy `Lightweight` maps to `lite`; legacy `Standard` / `Strict` map to `full` with soft or hard hook gates.
 
-CI 会同时验证正例通过和负例失败。
+```mermaid
+flowchart TD
+  A["Start delivery request"] --> B{"Select mode"}
+  B -->|lite| C["Use final response as compact state"]
+  B -->|full| D["Initialize .delivery/runs/<run-id> artifacts"]
 
-`scripts/test-delivery-run-validator.sh` 还会生成临时负例，覆盖缺少 Issue and Prior Attempts、缺少 Prior Attempt Comparison、缺少 Minimum Skill Dependencies、缺少 Validation Prerequisites、缺少 Superpowers decision、缺少 Requirements Maturity、缺少 Design Readiness、缺少 Dependency Decision、跨文件重复 gate、缺少版本/发布报告、缺少 Hook Ledger、blocked hook、硬门禁错误降级为 warn、软门禁 warn 留证、错位 hook、重复 hook、缺少 Review Ledger、blocked review、错位 review、重复 review 等回归场景。`scripts/test-init-delivery-run.sh` 覆盖初始化脚本是否生成完整 Gate/Hook/Review Ledger 骨架、issue/既有尝试记录、既有尝试对比、最小 skill 依赖、验证前置、软硬门禁标注、Codex/Claude Code/generic runtime 专有 hook、自动 Codex runtime 识别和防覆盖行为。
+  C --> G1["G1 Requirements"]
+  D --> G1
 
-`examples/pressure-scenarios/mobius-harness.md` 提供人工或 agent-to-agent 行为压测场景，用来检查 agent 是否真的会在缺少需求、缺少计划、blocked gate 或未记录 exception 时停止推进。
+  G1 --> R1["Issue and Prior Attempts\nMinimum Skill Dependencies\nRequirements Maturity"]
+  R1 --> DL1["Delegation Ledger\nRequirements Analyst / specialist roles"]
+  DL1 --> RV1["Adversarial Review Ledger"]
+  RV1 -->|pass / not-applicable / exception| G2["G2 Plan"]
+  RV1 -->|blocked| STOP1["Stop until evidence or accepted exception"]
 
-如果交付被中断，后续 agent 应先读取 `.delivery/runs/<run-id>/`，找到最早未完成的阶段或子阶段，再基于 Todo List、Failure List、Change List 和当前 git 状态继续执行。
+  G2 --> R2["Prior Attempt Comparison\nDependency Decision\nValidation Prerequisites\nDesign Readiness"]
+  R2 --> DL2["Delegation Ledger\nDelivery Architect / Domain Reviewer"]
+  DL2 --> RV2["Adversarial Review Ledger"]
+  RV2 -->|pass / not-applicable / exception| G3["G3 Local Development"]
+  RV2 -->|blocked| STOP2["Stop until evidence or accepted exception"]
 
-## 仓库结构
+  G3 --> G4["G4 Implementation"]
+  G4 --> G5["G5 Verification\nlocal checks, diff review, sensitive scan"]
+  G5 --> G6["G6 PR/MR\nURL or not-applicable reason"]
+  G6 --> G7{"G7 CI/CD"}
+  G7 -->|async allowed| ASYNC["Record head SHA, check URLs, next observation"]
+  G7 -->|terminal wait required| WAIT["Wait for terminal checks"]
+  ASYNC --> G8["G8 Delivery Report"]
+  WAIT --> G8
+
+  G8 --> DONE["Complete only when all required ledgers are terminal and evidenced"]
+
+  subgraph Full_Mode_Only["Full mode controls"]
+    H["Hook Ledger\n[hard] blocks, [soft] warn requires mirrored Failure/Change rows"]
+  end
+
+  D -.-> H
+  H -.-> G1
+  H -.-> G2
+  H -.-> G5
+  H -.-> G7
+```
+
+Required phase state for each phase or subphase:
+
+- Goal
+- Checklist
+- Gate Ledger
+- Delegation Ledger with distinct subagent roles and candidate specialist skills
+- Hook Ledger for full deliveries
+- Review Ledger with multiple adversarial perspectives
+- Todo List
+- Failure List
+- Change List
+
+Delegated skill output is phase evidence, not a replacement for Mobius Harness gate decisions. A phase cannot close with a missing or `blocked` required gate, delegation, hook, or review row. Any `complete` status must have evidence.
+
+PR/MR CI/CD tracking is asynchronous by default for small iterative updates: record the head SHA, check links, and next observation point, then return control to the user. Wait for terminal CI/CD only when the user asks, the delivery is about to merge or release, repository policy requires terminal checks, or an observed failure needs a synchronous follow-up. Do not claim CI/CD passed until checks for the current head SHA are terminal and successful.
+
+The delivery artifacts must follow [docs/HARNESS.md](docs/HARNESS.md).
+
+## Executable Examples
+
+The repository includes `examples/delivery-runs/` as executable fixtures:
+
+- `passing`: a complete Delivery Episode Package that must pass.
+- `exception`: an accepted exception mirrored in Failure List and Change List.
+- `blocked`: a negative fixture with a blocked gate that the validator must reject.
+
+CI validates both positive fixtures and negative fixtures.
+
+`scripts/test-delivery-run-validator.sh` generates temporary negative cases for missing `Mode`, missing Delegation Ledger, missing Issue and Prior Attempts, missing Prior Attempt Comparison, missing Minimum Skill Dependencies, missing Validation Prerequisites, missing Superpowers decisions, missing Requirements Maturity, missing Design Readiness, missing Dependency Decision, duplicate gates, missing release report, missing Hook Ledger, blocked hooks, hard gates downgraded to `warn`, soft-gate warning audit records, misplaced hooks, duplicate hooks, missing Review Ledger, blocked reviews, misplaced reviews, and duplicate reviews.
+
+`scripts/test-init-delivery-run.sh` checks that initialization generates complete Mode, Gate/Delegation/Hook/Review Ledger scaffolding, issue and prior-attempt sections, prior-attempt comparison, minimum skill dependencies, validation prerequisites, soft/hard gate labels, Codex/Claude Code/generic runtime-specific hooks, automatic Codex runtime detection, and overwrite protection.
+
+`examples/pressure-scenarios/mobius-harness.md` provides manual or agent-to-agent pressure scenarios that check whether an agent actually stops when requirements, plans, gates, hooks, reviews, or mirrored exceptions are missing.
+
+If a delivery is interrupted, the next agent should read `.delivery/runs/<run-id>/`, find the earliest incomplete phase or subphase, then continue from Todo List, Failure List, Change List, and current git state.
+
+## Repository Layout
 
 ```text
 .
@@ -144,19 +226,19 @@ CI 会同时验证正例通过和负例失败。
 └── README.md
 ```
 
-## 使用
+## Usage
 
-软链接到目标平台的 skill 目录：
+Link skills into target platform skill directories:
 
 ```bash
 bash scripts/link_skills.sh /path/to/claude/skills /path/to/codex/skills /path/to/openclaw/skills
 ```
 
-脚本会把 `skills/` 下每个 skill 目录软链接过去，平台直接读取 `SKILL.md` 和 `skill.json`。
+The script symlinks each directory under `skills/`; target platforms read `SKILL.md` and `skill.json` directly.
 
-## Codex 兼容性
+## Codex Compatibility
 
-如果目标平台是本地 Codex，`SKILL.md` 顶部需要带 YAML frontmatter，至少包含：
+For local Codex discovery, `SKILL.md` should include YAML frontmatter with at least:
 
 ```md
 ---
@@ -165,41 +247,41 @@ description: One-line description.
 ---
 ```
 
-- `name` 建议与 `skill.json.id` 和目录名保持一致。
-- `description` 建议与 `skill.json.description` 保持一致。
-- 仅有 `skill.json` 不足以保证 Codex 发现该 skill；Codex 本地发现逻辑会读取 `SKILL.md` 元数据。
+- `name` should match `skill.json.id` and the directory name.
+- `description` should match `skill.json.description`.
+- `skill.json` alone is not enough for reliable local Codex discovery; Codex reads `SKILL.md` metadata.
 
-本仓库内置的 `create-skill.sh` 已默认生成兼容 frontmatter。
+The built-in `create-skill.sh` script generates compatible frontmatter by default.
 
-## 新增 Skill
+## Add A Skill
 
 ```bash
 bash scripts/create-skill.sh my-new-skill
 ```
 
-脚本会创建 `skills/my-new-skill/` 并生成 SKILL.md 和 skill.json 模板，填写 TODO 即可。
+The script creates `skills/my-new-skill/` with `SKILL.md` and `skill.json` templates. Fill in the TODOs before using the skill.
 
-手动新增也可以：
+Manual creation is also supported:
 
-1. 在 `skills/` 下新增目录，例如 `my-new-skill/`。
-2. 新增 `SKILL.md`（人类可读标准文档）。
-3. 新增 `skill.json`（机器可读结构化数据）。
-4. 参考 [docs/SKILL_SPEC.md](docs/SKILL_SPEC.md) 填写字段。
-5. 按本 README 的 Skill 标准补充适用范围、分类/决策表、输出标准和示例。
-6. 如果新增或修改了仓库级约束，更新 [AGENTS.md](AGENTS.md)。
+1. Create a directory under `skills/`, for example `my-new-skill/`.
+2. Add `SKILL.md` as the human-readable work standard.
+3. Add `skill.json` as the machine-readable structured data.
+4. Follow [docs/SKILL_SPEC.md](docs/SKILL_SPEC.md).
+5. Add scope classification, decision tables, output standards, and examples that match this README's Skill Standards.
+6. If the new skill changes repository-level constraints, update [AGENTS.md](AGENTS.md).
 
-## CI 验证
+## CI Validation
 
-每次 push 和 PR 会自动检查：
+Every push and PR checks:
 
-- 每个 skill 目录包含 SKILL.md 和 skill.json。
-- skill.json 语法正确且包含全部必需字段。
-- skill.json 的 id 与目录名一致。
-- `SKILL.md` frontmatter 中的 `name` / `description` 与 skill 元数据一致。
-- PR 或 push diff 没有 whitespace error。
-- Delivery run validator 的正例、exception、blocked 负例和生成式负例回归测试通过。
+- Each skill directory contains `SKILL.md` and `skill.json`.
+- `skill.json` is valid JSON and includes all required fields.
+- `skill.json.id` matches the directory name.
+- `SKILL.md` frontmatter `name` / `description` matches skill metadata.
+- The PR or push diff has no whitespace errors.
+- Delivery run validator positive fixtures, exception fixtures, blocked negative fixtures, and generated negative regression tests pass.
 
-本地也可以先跑：
+Run locally before finishing skill changes:
 
 ```bash
 bash scripts/validate-skills.sh

@@ -8,9 +8,12 @@ Use Mobius Harness when a user asks to implement, deliver, create a PR/MR, follo
 
 Choose one mode at the start:
 
-- `Lightweight`: small, low-risk changes. Persisted artifacts are optional, but the final response must include a compact Gate Ledger and the same delivery facts.
-- `Standard`: normal code delivery. Create `.delivery/runs/<run-id>/`, maintain the four core artifacts, and keep a Gate Ledger for every phase.
-- `Strict`: high-risk, release, security, migration, multi-module, or user-requested audit work. Persist every phase/subphase state transition, gate decision, and gate exception.
+| Mode | Use When | Required State |
+|---|---|---|
+| `lite` | Small, low-risk changes where the final response can carry the complete delivery state. | Follow G1-G8 in order; include compact Gate Ledger, Delegation Ledger, validation evidence, risks, and follow-ups in the final response. Persisted artifacts and executable hook gates are optional. |
+| `full` | Normal delivery, risky changes, release/security/migration work, multi-module changes, PR/MR work, CI/CD tracking, user-requested auditability, or any handoff another agent may need to resume. | Create `.delivery/runs/<run-id>/`, maintain the four core artifacts, and keep Gate, Delegation, Hook, and Review Ledgers for every phase/subphase. |
+
+Legacy mode mapping: former `Lightweight` maps to `lite`; former `Standard` maps to `full` with default soft hook gates; former `Strict` maps to `full` with hard hook gates or explicit hard rows where user, repository, release, security, or merge policy requires blocking.
 
 Generate `run-id` from the task name in kebab-case, for example `add-user-auth`. If it already exists, append a date or short sequence such as `add-user-auth-20260517` or `add-user-auth-2`. Avoid spaces, random long hashes, and non-descriptive ids.
 
@@ -25,7 +28,7 @@ Mobius Harness may use Superpowers skills as phase-level quality gates, but the 
 | Situation | Required Decision |
 |---|---|
 | Creative work, new behavior, unclear product intent, UX shaping, or competing solution paths | Use `superpowers:brainstorming`, or record why it is not applicable. |
-| Multi-step implementation, Standard mode, Strict mode, risky refactor, migration, or work that another agent may execute | Use `superpowers:writing-plans`, or record why it is not applicable. |
+| Multi-step implementation, full mode, risky refactor, migration, or work that another agent may execute | Use `superpowers:writing-plans`, or record why it is not applicable. |
 | Already-approved external spec or plan | Record the source artifact and mark the Superpowers step `not-applicable` unless new ambiguity appears. |
 
 Record the decision in the relevant phase state:
@@ -89,7 +92,7 @@ Requirements and plan phases must include `Minimum Skill Dependencies` so the ag
 | `mobius-harness` | Primary delivery loop and artifact contract. | `no-new-dependency` | Block until available. |
 | `local-repo-development` | Repo topology, instruction discovery, validation, commit, and PR workflow. | `no-new-dependency` | Record an equivalent local workflow or accepted exception. |
 | `superpowers:brainstorming` | Required for creative work, behavior shaping, unclear intent, or competing solution paths. | `no-new-dependency` | Mark not applicable only with fixed requirements; otherwise block or record an accepted exception. |
-| `superpowers:writing-plans` | Required for Standard or Strict delivery, multi-step work, risky changes, or handoff plans. | `no-new-dependency` | Mark not applicable only for trivial plans; otherwise block or record an accepted exception. |
+| `superpowers:writing-plans` | Required for full delivery, multi-step work, risky changes, or handoff plans. | `no-new-dependency` | Mark not applicable only for trivial plans; otherwise block or record an accepted exception. |
 
 Superpowers entries are platform-provided skill dependencies, not repository runtime dependencies. They must still be checked at initialization and tied to the G1/G2 gate evidence so unavailable skills are recorded before implementation starts.
 
@@ -112,7 +115,7 @@ Gate rules:
 - A phase transition must include a Gate Ledger row with gate id, required evidence, status, evidence pointer, and exception record when relevant.
 - A skipped command, missing artifact, unresolved question, failing CI job, or unavailable scanner is `blocked` until it is converted to `not-applicable` or `exception` with evidence.
 - An exception must identify who or what accepted the risk: a user decision, repository instruction, documented policy, or explicit out-of-scope rationale.
-- For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before the final report when the script exists. Record failure output in Failure List and do not complete the delivery until it passes or is explicitly excepted.
+- For `full` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before the final report when the script exists. Record failure output in Failure List and do not complete the delivery until it passes or is explicitly excepted.
 
 ### CI/CD Follow-up Standard
 
@@ -126,9 +129,39 @@ CI/CD follow-up is asynchronous by default during small iterative PR/MR updates.
 
 When waiting is not selected, record the CI/CD state as `async-observed` or `pending-observation` with evidence. Do not claim CI/CD passed until the current head SHA has terminal successful checks.
 
+### Delegation Standard
+
+Mobius Harness may delegate specialist work from any phase, but the harness remains accountable for the phase result and final delivery. Delegation is a state transition, not a side conversation.
+
+Every phase or subphase must include a Delegation Ledger:
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+
+Delegation decisions:
+
+| Decision | Meaning | May Phase Close |
+|---|---|---|
+| `use` | The phase requires the specialist skill before the gate can pass. | No, until the returned evidence is recorded and the decision becomes `done`. |
+| `done` | The delegated skill returned the required evidence. | Yes, if other ledgers pass. |
+| `not-applicable` | The skill trigger does not apply, with evidence. | Yes. |
+| `deferred` | The skill is intentionally moved to a later phase with a carry-forward item. | Yes, only when Todo List or Change List records the later owner/phase. |
+| `exception` | The skill should have been used, but accepted risk allows progress. | Yes, only with mirrored Failure List and Change List records. |
+| `blocked` | The skill is required and unavailable, incomplete, or unresolved. | No. |
+
+Delegation rules:
+
+- Record candidate specialist skills during the phase where their output affects the gate: requirements/design skills in G1-G2, repo/worktree skills in G3, implementation/review skills in G4-G5, PR/CI skills in G6-G7, and reporting/release skills in G8.
+- Record a distinct subagent role for every delegation row. Roles should express ownership and perspective, such as `Requirements Analyst`, `Delivery Architect`, `Repository Steward`, `Implementation Builder`, `Verification Analyst`, `Security Reviewer`, `CI Coordinator`, or `Delivery Reporter`.
+- Use different roles across phases. Do not satisfy delegation with one repeated generic role such as `specialist`, `agent`, `subagent`, `owner`, or `assistant`.
+- Handoff text must name the evidence expected back from the delegated skill, such as an approved spec, API review findings, test matrix, refactor phase plan, bug reproduction, PR/MR state, CI/CD observation, or commit message.
+- Returned specialist output must be recorded as evidence in the owning phase's Gate Ledger, Hook Ledger, Review Ledger, plan, verification, or report. The delegated skill does not decide the Mobius phase gate by itself.
+- If a platform cannot load a named skill, record `blocked`, `not-applicable`, or `exception` rather than silently substituting untracked reasoning.
+- A phase cannot be `complete` while a Delegation Ledger row needed by that phase is `blocked`.
+
 ### Hook Enforcement Standard
 
-Hooks are required controls inside phase gates for Standard and Strict deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Claude Code/Codex evidence rules, soft and hard gate modes, and executable hook safety.
+Hooks are required controls inside phase gates for full deliveries. Use `hook-policy.md` for the required hook list, trigger timing, Claude Code/Codex evidence rules, soft and hard gate modes, and executable hook safety.
 
 Hook rules:
 
@@ -194,6 +227,7 @@ Every phase and subphase must record state with these sections:
 - `Goal`: the concrete outcome this phase or subphase must achieve.
 - `Checklist`: objective checks required to exit this phase or subphase.
 - `Gate Ledger`: gate id, required evidence, status, evidence pointer, and exception detail.
+- `Delegation Ledger`: subagent role, candidate specialist skill, trigger, decision, evidence, and handoff or return requirement.
 - `Hook Ledger`: hook id, trigger, required action prefixed with `[hard]` or `[soft]`, status, evidence pointer, and failure handling.
 - `Review Ledger`: review id, role, perspective, challenge, status, resolution, and evidence.
 - `Todo List`: unfinished actions, preferably with status such as `todo`, `doing`, `blocked`, or `done`.
@@ -236,6 +270,11 @@ Evidence: <commands, files, links, PR/MR, CI/CD, or reason unavailable>
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
 
 ### Hook Ledger
 

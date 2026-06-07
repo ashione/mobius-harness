@@ -9,7 +9,7 @@ Mobius Harness should actively consider specialist skills:
 | Situation | Skill |
 |---|---|
 | Creative work, feature shaping, behavior design, unclear product intent, competing solution paths | `superpowers:brainstorming` |
-| Multi-step implementation plan, Standard or Strict delivery, risky handoff to another agent | `superpowers:writing-plans` |
+| Multi-step implementation plan, full delivery, risky handoff to another agent | `superpowers:writing-plans` |
 | API contract, compatibility, status codes, auth, versioning | `api-design-review` |
 | Refactor, migration, module split, rollback planning | `refactor-planner` |
 | Bug, crash, regression, unclear reproduction | `bug-triage` |
@@ -28,12 +28,14 @@ Delivery is done only when:
 - issue context and prior attempts are recorded or marked not applicable with evidence when the task is issue, bug, PR, or external-fix driven,
 - Requirements Maturity is `ready-for-design` or explicitly excepted with accepted risk,
 - Design Readiness is `ready-for-implementation` or explicitly excepted with accepted risk,
+- mode is selected as `lite` or `full` and recorded in the final response or persisted artifacts,
 - Minimum Skill Dependencies are recorded in requirements and plan, including Superpowers dependency handling,
+- Delegation Ledger decisions are recorded for each phase, including not-applicable evidence when no specialist skill is delegated,
 - Validation Prerequisites are recorded before validation commands are treated as final,
 - Superpowers brainstorming and writing-plans decisions are recorded for requirements and plan gates,
 - Dependency Decision is recorded for the plan gate, including evidence and fallback,
 - Gate Ledger rows `G1` through `G8` are all `pass`, `not-applicable`, or `exception`,
-- Hook Ledger rows from `hook-policy.md` are all `pass`, `not-applicable`, `exception`, or valid soft-gate `warn` for Standard and Strict deliveries,
+- Hook Ledger rows from `hook-policy.md` are all `pass`, `not-applicable`, `exception`, or valid soft-gate `warn` for full deliveries,
 - Review Ledger rows from `delivery-process.md` are all `pass`, `not-applicable`, or `exception`,
 - no Gate Ledger row is `blocked`,
 - no Hook Ledger row is `blocked`,
@@ -43,7 +45,7 @@ Delivery is done only when:
 - sensitive information scan is complete,
 - PR/MR state is recorded or not applicable with reason,
 - CI/CD terminal state is recorded or not applicable with reason,
-- `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` passes for Standard and Strict deliveries when the script exists, or its unavailability is recorded as an exception,
+- `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` passes for full deliveries when the script exists, or its unavailability is recorded as an exception,
 - open failures are fixed, accepted, or deferred,
 - delivery report is complete.
 
@@ -54,6 +56,7 @@ Mobius Harness must not:
 - publish to production without explicit authorization,
 - bypass failing CI/CD without recording accepted risk,
 - advance past a blocked gate,
+- advance past a blocked delegation decision,
 - advance past a blocked hook,
 - advance past a blocked adversarial review,
 - start coding while requirements maturity or design readiness is blocked,

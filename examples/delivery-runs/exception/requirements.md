@@ -3,6 +3,7 @@
 Status: complete
 Phase: requirements
 Updated: fixture
+Mode: full
 Evidence: decision:exception fixture requirements
 
 ## Phase State
@@ -40,6 +41,12 @@ Show a complete requirements gate for an exception fixture.
 | requirements_product | Product | User intent and acceptance | Are success criteria specific and user-visible? | pass | Fixture success criteria are explicit. | file:examples/delivery-runs/exception/requirements.md |
 | requirements_engineering | Engineering | Feasibility and repo constraints | Can the repo support this without hidden assumptions? | pass | Fixture scope is limited to delivery artifact validation. | file:examples/delivery-runs/exception/requirements.md |
 | requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | pass | No blocking fixture unknowns remain. | decision:fixture |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| requirements | Requirements Analyst | superpowers:brainstorming | Creative work, behavior shaping, unclear intent, or competing solution paths | not-applicable | decision:fixture requirements are fixed | Return not-applicable evidence before G1 completion |
 
 ### Todo List
 
@@ -106,7 +113,7 @@ Fixture uses `superpowers:brainstorming` as not applicable.
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for full delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Uncertainty Register
 

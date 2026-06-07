@@ -11,10 +11,11 @@ repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 gate_list_file="$(mktemp)"
 hook_list_file="$(mktemp)"
 review_list_file="$(mktemp)"
+delegation_role_list_file="$(mktemp)"
 
 # shellcheck disable=SC2317
 cleanup() {
-  rm -f "${gate_list_file}" "${hook_list_file}" "${review_list_file}"
+  rm -f "${gate_list_file}" "${hook_list_file}" "${review_list_file}" "${delegation_role_list_file}"
 }
 trap cleanup EXIT
 
@@ -148,6 +149,16 @@ require_artifact_sections() {
   local path="$1"
   local file="$2"
   local sections=()
+  local mode
+
+  mode="$(sed -n 's/^Mode:[[:space:]]*//p' "${path}" | head -n 1)"
+  if [[ -z "${mode}" ]]; then
+    record_error "${file} missing Mode header"
+  elif [[ "${mode}" != "full" && "${mode}" != "lite" ]]; then
+    record_error "${file} has invalid Mode: ${mode}"
+  fi
+
+  require_marker "${path}" "${file}" "### Delegation Ledger"
 
   case "${file}" in
     requirements.md)
@@ -412,6 +423,95 @@ is_expected_review_for_file() {
   esac
 }
 
+validate_delegation_ledger() {
+  local path="$1"
+  local file="$2"
+
+  awk -F'|' -v file="${file}" '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^### Delegation Ledger/ {
+      ledger = "delegation"
+      next
+    }
+
+    /^### / {
+      ledger = ""
+    }
+
+    ledger == "delegation" && /^\|/ {
+      phase = trim($2)
+      role = trim($3)
+      skill = trim($4)
+      decision = trim($6)
+      evidence = trim($7)
+      handoff = trim($8)
+
+      if (phase == "Phase" || phase ~ /^---$/) {
+        next
+      }
+
+      rows += 1
+
+      if (phase == "" || skill == "") {
+        printf("ERROR: %s delegation row missing phase or candidate skill\n", file)
+        invalid = 1
+      }
+
+      if (role == "" || role ~ /^<.*>$/) {
+        printf("ERROR: %s delegation %s missing subagent role\n", file, skill)
+        invalid = 1
+      }
+
+      if (tolower(role) ~ /^(agent|assistant|subagent|specialist|owner|worker|role|n\/a|none)$/) {
+        printf("ERROR: %s delegation %s has generic subagent role: %s\n", file, skill, role)
+        invalid = 1
+      }
+
+      if (decision != "use" && decision != "done" && decision != "not-applicable" && decision != "deferred" && decision != "exception" && decision != "blocked") {
+        printf("ERROR: %s delegation %s has invalid decision: %s\n", file, skill, decision)
+        invalid = 1
+      }
+
+      if (decision == "blocked") {
+        printf("ERROR: %s delegation %s is blocked\n", file, skill)
+        invalid = 1
+      }
+
+      if (decision == "use") {
+        printf("ERROR: %s delegation %s is still in use\n", file, skill)
+        invalid = 1
+      }
+
+      if (evidence == "" || evidence ~ /^<.*>$/) {
+        printf("ERROR: %s delegation %s missing evidence\n", file, skill)
+        invalid = 1
+      }
+
+      if (evidence !~ /^(cmd|file|url|decision|reason):/) {
+        printf("ERROR: %s delegation %s evidence must start with cmd:, file:, url:, decision:, or reason:\n", file, skill)
+        invalid = 1
+      }
+
+      if (handoff == "" || handoff ~ /^<.*>$/) {
+        printf("ERROR: %s delegation %s missing handoff/return\n", file, skill)
+        invalid = 1
+      }
+    }
+
+    END {
+      if (rows == 0) {
+        printf("ERROR: %s Delegation Ledger has no rows\n", file)
+        invalid = 1
+      }
+      exit invalid ? 1 : 0
+    }
+  ' "${path}"
+}
+
 for file in "${required_files[@]}"; do
   path="${run_dir}/${file}"
 
@@ -428,6 +528,33 @@ for file in "${required_files[@]}"; do
   require_artifact_sections "${path}" "${file}"
   require_minimum_skill_dependencies "${path}" "${file}"
   require_decision_content "${path}" "${file}"
+  if ! validate_delegation_ledger "${path}" "${file}"; then
+    status=1
+  fi
+
+  awk -F'|' '
+    function trim(value) {
+      gsub(/^[ \t]+|[ \t]+$/, "", value)
+      return value
+    }
+
+    /^### Delegation Ledger/ {
+      ledger = "delegation"
+      next
+    }
+
+    /^### / {
+      ledger = ""
+    }
+
+    ledger == "delegation" && /^\|/ {
+      phase = trim($2)
+      role = trim($3)
+      if (phase != "Phase" && phase !~ /^---$/ && role != "" && role !~ /^<.*>$/) {
+        print role
+      }
+    }
+  ' "${path}" >> "${delegation_role_list_file}"
 
   artifact_status="$(sed -n 's/^Status:[[:space:]]*//p' "${path}" | head -n 1)"
   if [[ -z "${artifact_status}" ]]; then
@@ -971,8 +1098,14 @@ for review in "${required_reviews[@]}"; do
   fi
 done
 
+distinct_delegation_roles="$(sort -u "${delegation_role_list_file}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
+if [[ "${distinct_delegation_roles}" -lt 4 ]]; then
+  echo "ERROR: delivery run must include at least 4 distinct subagent roles in Delegation Ledger rows"
+  status=1
+fi
+
 if [[ "${status}" -eq 0 ]]; then
-  echo "Delivery run gates, hooks, and reviews validated successfully."
+  echo "Delivery run gates, delegation, hooks, and reviews validated successfully."
 fi
 
 exit "${status}"

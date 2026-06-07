@@ -3,11 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-usage: bash scripts/init-delivery-run.sh <run-id> [--root <repo-root>] [--request <text>] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
+usage: bash scripts/init-delivery-run.sh <run-id> [--root <repo-root>] [--request <text>] [--mode full|lite] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
 
 Initializes a Mobius Harness Delivery Episode Package with Gate, Hook, and
 Review Ledger rows under .delivery/runs/<run-id>/, plus executable hook gate
 scripts and config under .delivery/hooks/.
+
+Mode defaults to full because this script creates persisted Delivery Episode
+Package artifacts. A lite delivery may still be initialized when a local
+auditable record is useful, but lite mode does not require persisted artifacts.
 
 Gate type defaults to soft. Use --gate-type hard when every initialized hook
 must block until it is pass, not-applicable, or exception.
@@ -31,6 +35,7 @@ root="${default_root}"
 request="delivery run initialized from scripts/init-delivery-run.sh"
 gate_type="soft"
 runtime="auto"
+mode="full"
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -48,6 +53,14 @@ while [[ "$#" -gt 0 ]]; do
         exit 2
       fi
       request="$2"
+      shift 2
+      ;;
+    --mode)
+      if [[ "$#" -lt 2 ]]; then
+        echo "ERROR: --mode requires full or lite"
+        exit 2
+      fi
+      mode="$2"
       shift 2
       ;;
     --gate-type | --gate-mode)
@@ -85,6 +98,11 @@ fi
 
 if [[ "${gate_type}" != "soft" && "${gate_type}" != "hard" ]]; then
   echo "ERROR: gate type must be soft or hard"
+  exit 2
+fi
+
+if [[ "${mode}" != "full" && "${mode}" != "lite" ]]; then
+  echo "ERROR: mode must be full or lite"
   exit 2
 fi
 
@@ -214,7 +232,7 @@ hook_action() {
 }
 
 before_requirements_action="$(hook_action "Read user goal, repo instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision.")"
-before_plan_action="$(hook_action "Record skill activation, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision.")"
+before_plan_action="$(hook_action "Record skill activation, Delegation Ledger decisions, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision.")"
 before_edit_action="$(hook_action "Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes.")"
 after_edit_action="$(hook_action "Map changed files to acceptance criteria and check for unintended churn.")"
 before_commit_action="$(hook_action "Run or record local validation, diff review, and sensitive information scan.")"
@@ -457,6 +475,7 @@ cat > "${hook_dir}/config.json" <<EOF
   "generated_by": "scripts/init-delivery-run.sh",
   "run_id": "${run_id}",
   "run_dir": ".delivery/runs/${run_id}",
+  "mode": "${mode}",
   "gate_type": "${gate_type}",
   "runtime": "${runtime}",
   "hooks": [
@@ -541,6 +560,7 @@ Status: active
 Phase: requirements
 Updated: ${timestamp}
 Runtime: ${runtime}
+Mode: ${mode}
 Evidence: decision:${request_cell}
 
 ## Phase State
@@ -580,6 +600,12 @@ Capture requirements before planning or editing.
 | requirements_product | Product | User intent and acceptance | Are success criteria specific and user-visible? | blocked | Requirements are not yet finalized. | decision:${request_cell} |
 | requirements_engineering | Engineering | Feasibility and repo constraints | Can the repo support this without hidden assumptions? | blocked | Repository constraints are not yet finalized. | decision:${request_cell} |
 | requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | blocked | Blocking unknowns must be resolved or accepted. | decision:${request_cell} |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| requirements | Requirements Analyst | superpowers:brainstorming | Creative work, behavior shaping, unclear intent, or competing solution paths | blocked | decision:${request_cell} | Return approved requirements or not-applicable evidence before G1 completion |
 
 ### Todo List
 
@@ -645,7 +671,7 @@ ${request_cell}
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Required for creative work, behavior shaping, unclear intent, or competing solution paths. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Required for Standard or Strict delivery, multi-step work, risky changes, or handoff plans. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Required for full delivery, multi-step work, risky changes, or handoff plans. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Uncertainty Register
 
@@ -671,6 +697,7 @@ Status: draft
 Phase: plan
 Updated: ${timestamp}
 Runtime: ${runtime}
+Mode: ${mode}
 Evidence: file:.delivery/runs/${run_id}/requirements.md
 
 ## Phase State
@@ -698,7 +725,7 @@ Define the implementation plan after G1 is resolved.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
 
 ### Hook Ledger
 
@@ -713,6 +740,13 @@ Define the implementation plan after G1 is resolved.
 | plan_architecture | Architecture | Boundaries and alternatives | Is the selected approach justified against alternatives? | blocked | Plan is not yet selected. | file:.delivery/runs/${run_id}/plan.md |
 | plan_validation | Validation | Acceptance and tests | Does validation prove every acceptance criterion? | blocked | Validation is not yet mapped. | file:.delivery/runs/${run_id}/plan.md |
 | plan_risk | Risk | Rollback and dependency impact | Are rollback, dependency, and migration risks explicit? | blocked | Risk handling is not yet finalized. | file:.delivery/runs/${run_id}/plan.md |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| plan | Delivery Architect | superpowers:writing-plans | Full mode, multi-step work, risky work, or agent handoff plan | blocked | file:.delivery/runs/${run_id}/requirements.md | Return executable implementation plan or exception before G2 completion |
+| plan | Domain Reviewer | specialist skill | API, refactor, bug, test, UI, SQL, security, operations, or commit-message work | deferred | file:.delivery/runs/${run_id}/plan.md | Return specialist findings into selected approach, validation strategy, or PR/MR/report evidence |
 
 ### Todo List
 
@@ -746,7 +780,7 @@ TBD
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for full delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Superpowers Decisions
 
@@ -815,6 +849,7 @@ Status: draft
 Phase: verification
 Updated: ${timestamp}
 Runtime: ${runtime}
+Mode: ${mode}
 Evidence: file:.delivery/runs/${run_id}/plan.md
 
 ## Phase State
@@ -860,6 +895,13 @@ Record local development, implementation, verification, PR/MR, and CI/CD evidenc
 | verification_implementation | Implementation | Diff and requirements fit | Do changed files map cleanly to accepted requirements? | blocked | Implementation has not been verified. | file:.delivery/runs/${run_id}/verification.md |
 | verification_security | Security | Secrets and unsafe behavior | Were sensitive data and unsafe operations checked? | blocked | Sensitive information scan has not run. | file:.delivery/runs/${run_id}/verification.md |
 | verification_ci | CI/CD | Remote checks and async policy | Is CI/CD state recorded without unsupported pass claims? | blocked | CI/CD state has not been observed. | file:.delivery/runs/${run_id}/verification.md |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| local-development | Repository Steward | local-repo-development | Worktree, dirty-state, commit, PR/MR, or CI/CD workflow | use | file:.delivery/runs/${run_id}/plan.md | Return topology, branch/worktree, validation, commit, PR/MR, and CI/CD evidence into G3-G7 |
+| verification | Verification Analyst | test-case-generator or specialist verifier | Validation gaps, regression risk, or surface-specific checks | deferred | file:.delivery/runs/${run_id}/verification.md | Return commands, coverage gaps, or not-applicable evidence before G5 completion |
 
 ### Todo List
 
@@ -929,6 +971,7 @@ Status: draft
 Phase: report
 Updated: ${timestamp}
 Runtime: ${runtime}
+Mode: ${mode}
 Evidence: file:.delivery/runs/${run_id}/delivery-report.md
 
 ## Phase State
@@ -965,6 +1008,12 @@ Summarize completed delivery evidence after G1-G7 are terminal.
 | report_delivery | Delivery | User-facing result | Does the report answer what changed and what remains? | blocked | Delivery report is not complete. | file:.delivery/runs/${run_id}/delivery-report.md |
 | report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | blocked | Operations evidence is not complete. | file:.delivery/runs/${run_id}/delivery-report.md |
 | report_user | User Advocate | Clarity and unsupported claims | Are claims backed by evidence and easy to act on? | blocked | Final claims are not yet backed. | file:.delivery/runs/${run_id}/delivery-report.md |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| report | Delivery Reporter | commit-message-writer, local-repo-development, or release/report specialist | Commit message, PR/MR, CI/CD, cleanup, release, or final reporting needs | deferred | file:.delivery/runs/${run_id}/delivery-report.md | Return commit/report/cleanup/release evidence or not-applicable reason before G8 completion |
 
 ### Todo List
 
@@ -1020,8 +1069,9 @@ TBD
 TBD
 EOF
 
-echo "Initialized delivery run: ${run_dir}"
+echo "Initialized Mobius Harness ${mode} delivery run: ${run_dir}"
 echo "Initialized hook gates: ${hook_dir}"
 echo "Gate type: ${gate_type}"
+echo "Mode: ${mode}"
 echo "Runtime: ${runtime}"
 echo "Next: complete G1 in ${run_dir}/requirements.md before planning or editing."
