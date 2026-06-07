@@ -11,6 +11,7 @@ Status: draft | active | blocked | complete | deferred
 Phase: requirements
 Updated: <timestamp or phase marker>
 Runtime: codex | claude-code | generic
+Mode: lite | full
 Evidence: <user request, repo files, issue links, or reason unavailable>
 
 ## Phase State
@@ -48,6 +49,12 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 | requirements_product | Product | User intent and acceptance | Are success criteria specific and user-visible? | blocked | <resolution> | <evidence pointer> |
 | requirements_engineering | Engineering | Feasibility and repo constraints | Can the repo support this without hidden assumptions? | blocked | <resolution> | <evidence pointer> |
 | requirements_risk | Risk | Ambiguity and failure modes | Are blocking unknowns resolved or explicitly accepted? | blocked | <resolution> | <evidence pointer> |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| <phase> | <subagent role> | <skill or not-applicable> | <trigger condition> | blocked | <evidence pointer> | <required returned evidence before phase gate closes> |
 
 ### Todo List
 
@@ -95,7 +102,7 @@ Evidence: <user request, repo files, issue links, or reason unavailable>
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for full delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Uncertainty Register
 
@@ -122,6 +129,7 @@ Status: draft | active | blocked | complete | deferred
 Phase: plan
 Updated: <timestamp or phase marker>
 Runtime: codex | claude-code | generic
+Mode: lite | full
 Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 ## Phase State
@@ -147,7 +155,7 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | <evidence pointer> | <required if exception> |
 
 ### Hook Ledger
 
@@ -162,6 +170,12 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 | plan_architecture | Architecture | Boundaries and alternatives | Is the selected approach justified against alternatives? | blocked | <resolution> | <evidence pointer> |
 | plan_validation | Validation | Acceptance and tests | Does validation prove every acceptance criterion? | blocked | <resolution> | <evidence pointer> |
 | plan_risk | Risk | Rollback and dependency impact | Are rollback, dependency, and migration risks explicit? | blocked | <resolution> | <evidence pointer> |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| <phase> | <subagent role> | <skill or not-applicable> | <trigger condition> | blocked | <evidence pointer> | <required returned evidence before phase gate closes> |
 
 ### Todo List
 
@@ -189,7 +203,7 @@ Evidence: <repo inspection commands, files, issue links, or reason unavailable>
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for full delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Superpowers Decisions
 
@@ -250,6 +264,7 @@ Status: draft | active | blocked | complete | deferred
 Phase: verification
 Updated: <timestamp or phase marker>
 Runtime: codex | claude-code | generic
+Mode: lite | full
 Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or reason unavailable>
 
 ## Phase State
@@ -293,6 +308,12 @@ Evidence: <commands, diff, scanner output summary, PR/MR links, CI/CD links, or 
 | verification_implementation | Implementation | Diff and requirements fit | Do changed files map cleanly to accepted requirements? | blocked | <resolution> | <evidence pointer> |
 | verification_security | Security | Secrets and unsafe behavior | Were sensitive data and unsafe operations checked? | blocked | <resolution> | <evidence pointer> |
 | verification_ci | CI/CD | Remote checks and async policy | Is CI/CD state recorded without unsupported pass claims? | blocked | <resolution> | <evidence pointer> |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| <phase> | <subagent role> | <skill or not-applicable> | <trigger condition> | blocked | <evidence pointer> | <required returned evidence before phase gate closes> |
 
 ### Todo List
 
@@ -344,6 +365,7 @@ Status: draft | active | blocked | complete | deferred
 Phase: report
 Updated: <timestamp or phase marker>
 Runtime: codex | claude-code | generic
+Mode: lite | full
 Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavailable>
 
 ## Phase State
@@ -378,6 +400,12 @@ Evidence: <artifact links, commands, PR/MR links, CI/CD links, or reason unavail
 | report_delivery | Delivery | User-facing result | Does the report answer what changed and what remains? | blocked | <resolution> | <evidence pointer> |
 | report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | blocked | <resolution> | <evidence pointer> |
 | report_user | User Advocate | Clarity and unsupported claims | Are claims backed by evidence and easy to act on? | blocked | <resolution> | <evidence pointer> |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| <phase> | <subagent role> | <skill or not-applicable> | <trigger condition> | blocked | <evidence pointer> | <required returned evidence before phase gate closes> |
 
 ### Todo List
 

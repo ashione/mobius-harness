@@ -8,7 +8,7 @@ Hooks are auditable controls that run inside the existing Mobius phase gates. Ga
 
 Hooks start as declarative records. When `scripts/init-delivery-run.sh` exists, it also creates harness-owned gate scripts under `.delivery/hooks/` and project-level runtime settings that enforce those records through the same command-hook shape used by existing agent gate systems. Do not execute arbitrary repository hook scripts unless a repository explicitly defines them and the plan records a `new-dependency-required` or `existing-toolchain` Dependency Decision with validation and rollback notes.
 
-Every Standard and Strict Delivery Episode Package must include a Hook Ledger table in each persisted phase artifact:
+Every full Delivery Episode Package must include a Hook Ledger table in each persisted phase artifact:
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
@@ -44,10 +44,10 @@ Record the runtime under the phase evidence or Hook Ledger evidence when it affe
 
 ## Runtime-Specific Hook Initialization
 
-When the repository provides `scripts/init-delivery-run.sh`, initialize Standard or Strict artifacts with:
+When the repository provides `scripts/init-delivery-run.sh`, initialize full artifacts with:
 
 ```bash
-bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
+bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--mode full|lite] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
 ```
 
 Use `--runtime auto` by default. Auto-detection should rely on current agent-runtime environment signals, not merely whether both CLIs are installed on the machine. Codex signals include `CODEX_SHELL`, `CODEX_CI`, `CODEX_THREAD_ID`, or a Codex bundle identifier. Claude Code signals include `CLAUDECODE`, `CLAUDE_CODE`, `CLAUDE_SESSION_ID`, `CLAUDECODE_SESSION_ID`, or a Claude bundle identifier. If no dedicated runtime is evident, initialize generic hook actions.
@@ -67,12 +67,12 @@ Initialization writes `.delivery/hooks/config.json` with `run_id`, `gate_type`, 
 
 ## Required Hooks
 
-For Standard and Strict deliveries, the combined artifacts must contain exactly one terminal row for each hook below.
+For full deliveries, the combined artifacts must contain exactly one terminal row for each hook below.
 
 | Hook | Trigger | Required Action | Owning Artifact |
 |---|---|---|---|
 | `before_requirements` | before G1 completion | `[soft]` Read the user goal, applicable repo instructions, relevant specs/docs, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and whether `superpowers:brainstorming` is used, not applicable, unavailable, or excepted. | `requirements.md` |
-| `before_plan` | before G2 completion | `[soft]` Record skill activation, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and `superpowers:writing-plans` decision. | `plan.md` |
+| `before_plan` | before G2 completion | `[soft]` Record skill activation, Delegation Ledger decisions, Minimum Skill Dependencies, tool reality, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and `superpowers:writing-plans` decision. | `plan.md` |
 | `before_edit` | before editing files | `[soft]` Confirm Requirements Maturity and Design Readiness are satisfied, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated user changes. | `verification.md` |
 | `after_edit` | after editing files | `[soft]` Map changed files to acceptance criteria and check for unintended churn before validation or commit. | `verification.md` |
 | `before_commit` | before commit or PR/MR preparation | `[soft]` Run or record local validation, diff review, and sensitive information scan. | `verification.md` |

@@ -3,6 +3,7 @@
 Status: complete
 Phase: report
 Updated: fixture
+Mode: full
 Evidence: file:examples/delivery-runs/blocked/delivery-report.md
 
 ## Phase State
@@ -39,6 +40,12 @@ Show a report gate while G1 remains blocked.
 | report_delivery | Delivery | User-facing result | Does the report answer what changed and what remains? | pass | Summary and changed files are recorded. | file:examples/delivery-runs/blocked/delivery-report.md |
 | report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | pass | CI/CD and release notes are recorded for fixture scope. | file:examples/delivery-runs/blocked/delivery-report.md |
 | report_user | User Advocate | Clarity and unsupported claims | Are claims backed by evidence and easy to act on? | pass | Report evidence points to fixture files. | file:examples/delivery-runs/blocked/delivery-report.md |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| report | Delivery Reporter | commit-message-writer, local-repo-development, or release/report specialist | Commit message, PR/MR, CI/CD, cleanup, release, or final reporting needs | not-applicable | reason:fixture has no live PR or release | Return report evidence or not-applicable reason before G8 completion |
 
 ### Todo List
 

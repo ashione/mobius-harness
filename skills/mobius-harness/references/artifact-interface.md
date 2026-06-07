@@ -4,7 +4,7 @@ Use this reference for Delivery Episode Package files, required sections, and ev
 
 ## Delivery Episode Package
 
-For long or risky tasks, Mobius Harness records work under:
+For full tasks, Mobius Harness records work under:
 
 ```text
 .delivery/runs/<run-id>/
@@ -16,17 +16,18 @@ For long or risky tasks, Mobius Harness records work under:
 
 These files are execution artifacts and `.delivery/runs/` is ignored by git by default.
 
-For short tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: requirements, implementation summary, validation, review, sensitive information scan, PR or MR URL when present, CI/CD state, risks, and follow-ups.
+For `lite` tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: phase state, compact Gate Ledger, Delegation Ledger, implementation summary, validation, review, sensitive information scan, PR or MR URL when present, CI/CD state, risks, and follow-ups.
 
 ## Artifact Standard
 
 Use Markdown for all persisted artifacts. Every artifact must include:
 
 - `Status`: one of `draft`, `active`, `blocked`, `complete`, `deferred`.
+- `Mode`: one of `lite` or `full`.
 - `Phase`: matching the current delivery phase.
 - `Updated`: timestamp or clear phase marker.
 - `Evidence`: links, commands, file paths, PR/MR URL, CI/CD URL, or explicit reason when evidence is unavailable.
-- Phase/subphase records using `Goal`, `Checklist`, `Gate Ledger`, `Hook Ledger`, `Review Ledger`, `Todo List`, `Failure List`, and `Change List`.
+- Phase/subphase records using `Goal`, `Checklist`, `Gate Ledger`, `Delegation Ledger`, `Hook Ledger`, `Review Ledger`, `Todo List`, `Failure List`, and `Change List`.
 
 Evidence is mandatory. A completed phase, subphase, or final delivery without evidence is invalid.
 
@@ -46,7 +47,23 @@ Gate rules:
 - `Evidence` must point to commands, files, diffs, PR/MR URLs, CI/CD URLs, user decisions, or a reason evidence is unavailable.
 - `Exception` is required when `Status` is `exception`; record the same accepted risk in Failure List and Change List.
 - A `blocked` gate prevents phase completion and final delivery completion.
-- For Standard and Strict deliveries, the combined artifacts must contain exactly one terminal row for every gate from `G1` through `G8`.
+- For full deliveries, the combined artifacts must contain exactly one terminal row for every gate from `G1` through `G8`.
+
+## Delegation Ledger
+
+Every persisted phase/subphase record must include a Delegation Ledger table:
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+
+Delegation rules:
+
+- `Subagent Role` must be a specific ownership role, not a generic placeholder.
+- `Decision` must show whether the skill is used, not applicable, deferred, excepted, blocked, or done.
+- `Evidence` must use the same evidence prefixes as Gate Ledger evidence.
+- `Handoff/Return` must state what evidence the delegated skill must return to Mobius Harness before the phase gate can close.
+- A phase cannot close while a required delegation decision is `blocked`.
+- Delegated skill output is phase evidence; it does not replace Gate Ledger, Hook Ledger, Review Ledger, or final delivery accountability.
 
 ## Hook Ledger
 
@@ -66,7 +83,7 @@ Hook rules:
 - `Failure Handling` is required when `Status` is `exception`; record the same accepted risk in Failure List and Change List.
 - `Failure Handling` is required when `Status` is `warn`; record the same warning in Failure List and Change List.
 - A `blocked` hook prevents phase completion and final delivery completion.
-- For Standard and Strict deliveries, the combined artifacts must contain exactly one terminal row for every required hook from `hook-policy.md`.
+- For full deliveries, the combined artifacts must contain exactly one terminal row for every required hook from `hook-policy.md`.
 
 ## Review Ledger
 
@@ -100,6 +117,7 @@ Evidence format:
 
 - `Phase State`
 - `Gate Ledger`
+- `Delegation Ledger`
 - `Hook Ledger`
 - `Review Ledger`
 - `Superpowers Decisions`
@@ -121,6 +139,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Delegation Ledger`
 - `Review Ledger`
 - `Repo Findings`
 - `Specialist Skills`
@@ -142,6 +161,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Delegation Ledger`
 - `Review Ledger`
 - `Local Commands`
 - `Command Results`
@@ -160,6 +180,7 @@ Evidence format:
 - `Phase State`
 - `Gate Ledger`
 - `Hook Ledger`
+- `Delegation Ledger`
 - `Review Ledger`
 - `Summary`
 - `Requirements Result`

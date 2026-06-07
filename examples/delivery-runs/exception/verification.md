@@ -3,6 +3,7 @@
 Status: complete
 Phase: verification
 Updated: fixture
+Mode: full
 Evidence: cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/exception
 
 ## Phase State
@@ -48,6 +49,13 @@ Show that an accepted exception must be recorded in Failure List and Change List
 | verification_implementation | Implementation | Diff and requirements fit | Do changed files map cleanly to accepted requirements? | pass | Fixture verification maps changed artifacts to G1-G8. | file:examples/delivery-runs/exception/verification.md |
 | verification_security | Security | Secrets and unsafe behavior | Were sensitive data and unsafe operations checked? | pass | Sensitive information scan is recorded as no sensitive values. | file:examples/delivery-runs/exception/verification.md |
 | verification_ci | CI/CD | Remote checks and async policy | Is CI/CD state recorded without unsupported pass claims? | pass | Fixture records G6 as an accepted exception and CI/CD as not applicable. | reason:fixture has no live PR |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| local-development | Repository Steward | local-repo-development | Worktree, dirty-state, commit, PR/MR, or CI/CD workflow | not-applicable | reason:fixture has no live worktree | Return not-applicable evidence into G3-G7 |
+| verification | Verification Analyst | test-case-generator or specialist verifier | Validation gaps, regression risk, or surface-specific checks | not-applicable | reason:fixture is covered by validator command | Return validation evidence before G5 completion |
 
 ### Todo List
 

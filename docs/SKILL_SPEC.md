@@ -113,4 +113,4 @@ description: <one-line description>
 
 详见 [HARNESS.md](HARNESS.md)。
 
-Mobius Harness 的 requirements 和 plan artifact 必须包含 `Minimum Skill Dependencies`，记录 `mobius-harness`、`local-repo-development`、`superpowers:brainstorming`、`superpowers:writing-plans` 的使用条件、依赖分类、证据和 fallback。Plan artifact 还必须包含 `Validation Prerequisites`，记录验证命令运行前需要的生成物、初始化、迁移、fixture 或环境状态，以及缺失时的恢复方式。
+Mobius Harness 只有 `lite` 和 `full` 两种模式。`lite` 用最终响应承载紧凑阶段状态；`full` 使用 `.delivery/runs/<run-id>/` 持久化 artifact。持久化 artifact 必须包含 `Mode` header 和 `Delegation Ledger`，以便每个阶段记录不同的 subagent role、候选 specialist skill、触发条件、决策、证据和 delegated skill 返回给 Mobius Harness 的结果。Mobius Harness 的 requirements 和 plan artifact 必须包含 `Minimum Skill Dependencies`，记录 `mobius-harness`、`local-repo-development`、`superpowers:brainstorming`、`superpowers:writing-plans` 的使用条件、依赖分类、证据和 fallback。Plan artifact 还必须包含 `Validation Prerequisites`，记录验证命令运行前需要的生成物、初始化、迁移、fixture 或环境状态，以及缺失时的恢复方式。

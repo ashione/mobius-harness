@@ -3,6 +3,7 @@
 Status: complete
 Phase: plan
 Updated: fixture
+Mode: full
 Evidence: file:examples/delivery-runs/exception/plan.md
 
 ## Phase State
@@ -28,7 +29,7 @@ Show a complete plan gate for an exception fixture.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/exception/plan.md | |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/exception/plan.md | |
 
 ### Hook Ledger
 
@@ -43,6 +44,13 @@ Show a complete plan gate for an exception fixture.
 | plan_architecture | Architecture | Boundaries and alternatives | Is the selected approach justified against alternatives? | pass | Declarative fixture is selected over irrelevant product implementation. | file:examples/delivery-runs/exception/plan.md |
 | plan_validation | Validation | Acceptance and tests | Does validation prove every acceptance criterion? | pass | Validator command maps to fixture acceptance criteria. | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/exception |
 | plan_risk | Risk | Rollback and dependency impact | Are rollback, dependency, and migration risks explicit? | pass | No new dependency and rollback are recorded. | file:examples/delivery-runs/exception/plan.md |
+
+### Delegation Ledger
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+| plan | Delivery Architect | superpowers:writing-plans | Full mode, multi-step work, risky work, or agent handoff plan | not-applicable | decision:fixture plan is fixed | Return not-applicable evidence before G2 completion |
+| plan | Domain Reviewer | specialist skill | API, refactor, bug, test, UI, SQL, security, operations, or commit-message work | not-applicable | reason:fixture has no product surface | Return specialist findings or not-applicable evidence before phase completion |
 
 ### Todo List
 
@@ -76,7 +84,7 @@ Fixture uses committed example files.
 | mobius-harness | Primary delivery loop and artifact contract. | no-new-dependency | file:skills/mobius-harness/SKILL.md | blocked until available |
 | local-repo-development | Repo topology, instruction discovery, validation, commit, and PR workflow. | no-new-dependency | file:skills/local-repo-development/SKILL.md | record equivalent local workflow or exception |
 | superpowers:brainstorming | Requirements-phase design support when applicable. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only with fixed requirements; otherwise blocked or exception |
-| superpowers:writing-plans | Plan-phase support for Standard or Strict delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
+| superpowers:writing-plans | Plan-phase support for full delivery and multi-step work. | no-new-dependency | reason:platform-provided skill dependency checked at runtime | not-applicable only for trivial plans; otherwise blocked or exception |
 
 ## Superpowers Decisions
 

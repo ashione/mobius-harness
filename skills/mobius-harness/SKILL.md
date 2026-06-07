@@ -7,7 +7,7 @@ description: Use when a software delivery request spans requirements, planning, 
 
 ## Intent
 
-Orchestrate a single agent through the full software delivery loop: clarify requirements, plan the change, implement safely, validate locally, submit a PR or MR, track CI/CD, and produce a delivery report.
+Orchestrate a single accountable agent through a phase-explicit software delivery loop: clarify requirements, plan the change, implement safely, validate locally, submit a PR or MR, track CI/CD, and produce a delivery report. Mobius Harness has two modes: `lite` for compact deliveries and `full` for persisted, auditable deliveries.
 
 ## When to Use
 
@@ -34,14 +34,19 @@ Load references only when needed:
 
 ## Instructions
 
-1. Treat Mobius Harness as the primary entrypoint for end-to-end delivery work. Keep one agent accountable for the whole loop unless the user explicitly asks for delegation.
-2. Select `Lightweight`, `Standard`, or `Strict` mode at the start. Use persisted `.delivery/runs/<run-id>/` artifacts for Standard and Strict work.
-   - For Standard and Strict deliveries, initialize missing persisted artifacts and harness-owned hook gates with `bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]` when that script exists.
+1. Treat Mobius Harness as the primary entrypoint for end-to-end delivery work. Keep one agent accountable for the whole loop even when specialist skills are delegated from individual phases.
+2. Select `lite` or `full` mode at the start. Do not use legacy `Lightweight`, `Standard`, or `Strict` as active mode names.
+   - Use `lite` only for small, low-risk deliveries where the final response can carry the complete phase state. Lite still follows G1 through G8 in order and must include a compact Gate Ledger, Delegation Ledger, validation evidence, risks, and follow-ups.
+   - Use `full` for normal delivery, risky changes, release/security/migration work, multi-module changes, PR/MR work, CI/CD tracking, user-requested auditability, or any handoff that another agent may need to resume. Full mode uses persisted `.delivery/runs/<run-id>/` artifacts.
+   - Former `Standard` work maps to `full` with default soft hook gates. Former `Strict` work maps to `full` with hard hook gates or explicit hard rows where policy/risk requires blocking.
+   - For full deliveries, initialize missing persisted artifacts and harness-owned hook gates with `bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--mode full|lite] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]` when that script exists.
    - Use the initialization default `[soft]` unless the user, repository policy, release risk, security risk, or merge gate requires `[hard]`.
    - Keep gate strength separate from runtime-specific hook wording: use `--runtime auto` by default, or pin `codex`, `claude-code`, `claude`, or `generic` when the executor must be explicit; `claude` normalizes to `claude-code` in generated artifacts.
    - Treat initialized artifacts as a starting state with blocked gate, hook, and review rows; do not treat initialization as final validation.
 3. Follow the delivery process in order. Treat each phase gate as a blocking gate, not as a reminder. Do not move to the next phase until the current gate is `pass`, `not-applicable`, or an explicitly recorded `exception`.
-   - For Standard and Strict deliveries, maintain a Hook Ledger for required hook controls from `references/hook-policy.md`.
+   - Maintain a Delegation Ledger for every phase or subphase, even when no specialist skill is used. Record distinct subagent role, candidate skill, trigger, decision, evidence, and what must be returned before the phase can close.
+   - Delegate specialist skills at the phase where their evidence is needed, then return ownership to Mobius Harness before the phase gate is decided. A delegated skill result is evidence for the phase; it does not replace the Gate Ledger, Hook Ledger, Review Ledger, or final delivery accountability.
+   - For full deliveries, maintain a Hook Ledger for required hook controls from `references/hook-policy.md`.
    - Classify each Hook Ledger required action as `[hard]` or `[soft]`: hard gates block when unresolved; soft gates may use `warn` only with evidence, failure handling, and mirrored Failure List / Change List records.
    - Treat `blocked` hooks like `blocked` gates; do not advance until they pass, become not applicable, or are explicitly excepted.
    - Maintain a Review Ledger for each phase and do not publish that phase's final result or start execution until multi-role adversarial review is resolved.
@@ -54,19 +59,19 @@ Load references only when needed:
    - Record Requirements Maturity as `ready-for-design` only when success criteria, scope, non-goals, constraints, risks, open questions, and user decisions are specific enough to choose an implementation approach.
    - Use `superpowers:brainstorming` before creative work, behavior design, feature shaping, or ambiguous requirement decisions; record whether it was used, not applicable, or blocked.
    - Ask the user only for high-impact intent or tradeoff decisions that cannot be discovered from the repo.
-   - For long or risky tasks, create `.delivery/runs/<run-id>/requirements.md`.
+   - For full tasks, create `.delivery/runs/<run-id>/requirements.md`.
 5. Build a delivery plan:
    - Inspect the repository before deciding the implementation path.
    - Identify specialist skills to apply, such as `refactor-planner`, `api-design-review`, `test-case-generator`, `frontend-ux-polish`, `sql-query-optimizer`, `bug-triage`, or `team-subagent-orchestrator` when explicitly authorized.
    - Carry forward Minimum Skill Dependencies from requirements and update evidence or fallback handling when a required skill is unavailable.
    - When `superpowers:brainstorming` or `superpowers:writing-plans` is used, record the resulting spec or plan artifact path; when unavailable, record fallback handling as `blocked`, `not-applicable`, or `exception`.
-   - Use `superpowers:writing-plans` when the delivery needs a multi-step executable plan, especially for Standard or Strict mode.
+   - Use `superpowers:writing-plans` when the delivery needs a multi-step executable plan, especially for full mode.
    - Compare credible design options before selecting an approach; record rejected alternatives and why they were rejected.
    - Compare any discovered prior attempts against the selected approach, including API or dependency freshness checks when the earlier attempt depends on time-sensitive behavior.
    - Record Design Readiness as `ready-for-implementation` only when selected approach, affected areas, acceptance mapping, validation strategy, rollback notes, and start gate are explicit.
    - Record a Dependency Decision: `no-new-dependency`, `existing-toolchain`, or `new-dependency-required`, with reason, evidence, and fallback.
    - Define implementation steps, validation commands, validation prerequisites, acceptance criteria, and delivery checkpoints.
-   - For long or risky tasks, create `.delivery/runs/<run-id>/plan.md`.
+   - For full tasks, create `.delivery/runs/<run-id>/plan.md`.
 6. Develop locally using `local-repo-development`:
    - Confirm the current directory is a git repository.
    - Determine whether the current checkout is already a suitable linked worktree.
@@ -77,7 +82,7 @@ Load references only when needed:
    - Run the repository's relevant tests, type checks, builds, linters, or focused validation commands.
    - Before committing, review the diff for requirements compliance, implementation quality, test adequacy, security, regressions, unsafe behavior, and unintended churn.
    - Before committing, scan changed files for sensitive information. Prefer installed scanners such as `gitleaks` or `detect-secrets`; otherwise run a focused fallback scan. Do not print secret values.
-   - Record validation details in `.delivery/runs/<run-id>/verification.md` for long or risky tasks.
+   - Record validation details in `.delivery/runs/<run-id>/verification.md` for full tasks.
 8. Submit and track:
    - Use `commit-message-writer` to produce a clear conventional commit message when committing.
    - Create the PR or MR when requested or when delivery requires review.
@@ -86,8 +91,8 @@ Load references only when needed:
    - If CI/CD fails when observed, inspect logs, summarize the failure, fix in-scope issues, and decide with the user whether to wait for the next run or continue asynchronously.
 9. Deliver the result:
    - Produce a concise delivery report covering requirements, implementation, changed files, local validation, code review, sensitive information scan, PR or MR URL, CI/CD status, risks, and follow-ups.
-   - For long or risky tasks, write `.delivery/runs/<run-id>/delivery-report.md`.
-   - For short tasks, the final response may be the only report, but it must still cover the same delivery facts.
+   - For full tasks, write `.delivery/runs/<run-id>/delivery-report.md`.
+   - For lite tasks, the final response may be the only report, but it must still cover the same delivery facts plus compact Gate and Delegation Ledgers.
 
 ## Gate Contract
 
@@ -105,7 +110,14 @@ Every phase/subphase must maintain a Gate Ledger with:
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 
-For Standard and Strict deliveries, every phase/subphase must also maintain a Hook Ledger:
+Every phase/subphase must maintain a Delegation Ledger:
+
+| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |
+|---|---|---|---|---|---|---|
+
+Delegation decisions are `use`, `not-applicable`, `blocked`, `exception`, `deferred`, or `done`. A phase cannot close with a `blocked` delegation row. When a delegated skill is used, the handoff must state the exact evidence that must return to Mobius Harness before the phase gate can pass. Roles must be specific and distinct enough to show ownership, such as `Requirements Analyst`, `Delivery Architect`, `Repository Steward`, `Implementation Builder`, `Verification Analyst`, `Security Reviewer`, `CI Coordinator`, or `Delivery Reporter`; do not use one generic role for the whole delivery.
+
+For full deliveries, every phase/subphase must also maintain a Hook Ledger:
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
@@ -126,7 +138,7 @@ Before moving phases, answer the gate decision in the ledger:
 5. Which hooks were triggered for this phase, and what evidence proves each hook ran or was not applicable?
 6. Which review roles challenged the phase result, and how were their blocking findings resolved?
 
-For `Standard` and `Strict` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before marking the delivery complete when that script exists in the repository. If the script is unavailable, record that as a gate exception with reason.
+For `full` deliveries, run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before marking the delivery complete when that script exists in the repository. If the script is unavailable, record that as a gate exception with reason.
 
 ## Process Standard
 
@@ -146,6 +158,7 @@ For every phase and subphase, maintain a status record with:
 - Goal: what this phase or subphase must achieve.
 - Checklist: objective exit checks for the phase or subphase.
 - Gate Ledger: phase gate decisions with status and evidence.
+- Delegation Ledger: phase-level subagent roles, decisions to use, skip, defer, block, or except specialist skills, and the evidence returned from those skills.
 - Hook Ledger: Claude Code/Codex controls for skill activation, tool reality, soft and hard gates, worktree hygiene, review, CI/CD, cleanup, and local runtime sync.
 - Review Ledger: multi-role adversarial checks of the phase result before advancing.
 - Todo List: remaining actions, each with owner or status when useful.
@@ -156,7 +169,8 @@ For every phase and subphase, maintain a status record with:
 
 - A phase is complete only when every checklist item has evidence or an explicit unavailable reason.
 - A phase cannot be `complete` while its Gate Ledger has any `blocked` row.
-- A Standard or Strict phase cannot be `complete` while any required Hook Ledger row is `blocked` or missing.
+- A phase cannot be `complete` while any Delegation Ledger row needed for that phase is `blocked` or missing.
+- A full phase cannot be `complete` while any required Hook Ledger row is `blocked` or missing.
 - A phase cannot be `complete` while any required Review Ledger row is `blocked` or missing.
 - Requirements and plan phases must record whether `superpowers:brainstorming` and `superpowers:writing-plans` were used, skipped as not applicable, unavailable, or excepted with accepted risk.
 - Requirements and plan phases must record Minimum Skill Dependencies, including Superpowers dependency handling and fallback.
@@ -168,9 +182,10 @@ For every phase and subphase, maintain a status record with:
 - Plan phases must record Validation Prerequisites for setup, generated artifacts, migrations, fixtures, or environment state required before validation commands can run cleanly.
 - A delivery is complete only when requirements, implementation scope, changed files, validation, diff review, sensitive information scan, PR/MR state, CI/CD state, residual risks, and follow-ups are all reported.
 - A delivery cannot be `complete` until gates `G1` through `G8` are `pass`, `not-applicable`, or `exception`.
-- A Standard or Strict delivery cannot be `complete` until required hooks from `hook-policy.md` are `pass`, `not-applicable`, `exception`, or valid soft-gate `warn`.
+- A delivery cannot be `complete` until required Delegation Ledger rows are `done`, `not-applicable`, `deferred`, or `exception` with evidence.
+- A full delivery cannot be `complete` until required hooks from `hook-policy.md` are `pass`, `not-applicable`, `exception`, or valid soft-gate `warn`.
 - A delivery cannot be `complete` until required adversarial reviews are `pass`, `not-applicable`, or `exception`.
-- For Standard and Strict mode, persisted artifacts must be enough for another agent to resume without relying on conversation memory.
+- For full mode, persisted artifacts must be enough for another agent to resume without relying on conversation memory.
 - Do not collapse requirements, planning, implementation, and verification into a single vague status update.
 - Do not ask the user for decisions that can be answered by reading the repository or running safe local commands.
 
@@ -182,7 +197,7 @@ Use `draft`, `active`, `blocked`, `complete`, and `deferred` for phase status. I
 
 ## Artifact Standard
 
-For long or risky work, maintain `.delivery/runs/<run-id>/` as a Delivery Episode Package with:
+For full work, maintain `.delivery/runs/<run-id>/` as a Delivery Episode Package with:
 
 - `requirements.md`: Goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, and Issue and Prior Attempts.
 - `plan.md`: Repo findings, prior attempt comparison, selected specialist skills, Minimum Skill Dependencies, Superpowers artifact paths or fallback, Dependency Decision, implementation steps, validation strategy, Validation Prerequisites, acceptance criteria, rollback notes, and checkpoints.
@@ -191,7 +206,7 @@ For long or risky work, maintain `.delivery/runs/<run-id>/` as a Delivery Episod
 
 When the repository provides `scripts/init-delivery-run.sh`, prefer it to hand-writing the initial files so Gate Ledger, Hook Ledger, Review Ledger, soft/hard hook mode rows, runtime-specific hook wording, `.delivery/hooks/config.json`, `.delivery/hooks/agent_gate.sh`, executable `.delivery/hooks/<hook-id>.sh` gate scripts, and project-level `.claude/settings.json` / `.codex/settings.json` command-hook entries are generated consistently. The initialization default is soft and runtime auto-detection; choose hard only when the gate must block progress until resolved, and pin the runtime only when Codex, Claude Code, or generic evidence semantics must be explicit.
 
-Each artifact must include status, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
+Each artifact must include status, mode, timestamp or phase marker, evidence, and phase/subphase records using Goal, Checklist, Gate Ledger, Delegation Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List. Use table records for Gate Ledger, Delegation Ledger, Hook Ledger, Review Ledger, Todo List, Failure List, and Change List so another agent can audit and resume the delivery.
 
 When resuming, read the Delivery Episode Package first, identify the earliest incomplete phase or subphase, review Todo List, Failure List, and Change List, confirm git state, and continue from the first unmet gate.
 

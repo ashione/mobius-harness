@@ -35,6 +35,8 @@ auto_codex_run_id="agent-gate-init-auto-codex"
 auto_codex_run_dir="${tmp_dir}/.delivery/runs/${auto_codex_run_id}"
 auto_claude_run_id="agent-gate-init-auto-claude"
 auto_claude_run_dir="${tmp_dir}/.delivery/runs/${auto_claude_run_id}"
+lite_run_id="agent-gate-init-lite"
+lite_run_dir="${tmp_dir}/.delivery/runs/${lite_run_id}"
 
 mkdir -p "${tmp_dir}/.claude"
 cat > "${claude_settings}" <<'JSON'
@@ -76,7 +78,7 @@ if [[ ! -f "${hook_config}" ]]; then
   exit 1
 fi
 
-for expected in '"schema_version": 1' "\"run_id\": \"${run_id}\"" '"gate_type": "soft"' '"runtime":'; do
+for expected in '"schema_version": 1' "\"run_id\": \"${run_id}\"" '"mode": "full"' '"gate_type": "soft"' '"runtime":'; do
   if ! grep -q -F "${expected}" "${hook_config}"; then
     echo "ERROR: hook config missing expected field: ${expected}"
     exit 1
@@ -228,6 +230,30 @@ for file in requirements.md plan.md; do
   fi
 done
 
+for file in requirements.md plan.md verification.md delivery-report.md; do
+  if ! grep -q -F "Mode: full" "${run_dir}/${file}"; then
+    echo "ERROR: ${file} missing initialized full mode"
+    exit 1
+  fi
+
+  if ! grep -q -F "### Delegation Ledger" "${run_dir}/${file}"; then
+    echo "ERROR: ${file} missing Delegation Ledger"
+    exit 1
+  fi
+
+  if ! grep -q -F "| Phase | Subagent Role | Candidate Skill | Trigger | Decision | Evidence | Handoff/Return |" "${run_dir}/${file}"; then
+    echo "ERROR: ${file} missing subagent role delegation header"
+    exit 1
+  fi
+done
+
+for expected_role in "Requirements Analyst" "Delivery Architect" "Domain Reviewer" "Repository Steward" "Verification Analyst" "Delivery Reporter"; do
+  if ! grep -R -q -F "| ${expected_role} |" "${run_dir}"; then
+    echo "ERROR: initialized run missing subagent role: ${expected_role}"
+    exit 1
+  fi
+done
+
 if ! grep -q -F "## Issue and Prior Attempts" "${run_dir}/requirements.md"; then
   echo "ERROR: requirements.md missing Issue and Prior Attempts"
   exit 1
@@ -267,6 +293,11 @@ if ! grep -q -E '^\| G2 \| plan \| .*prior attempt comparison.*Minimum Skill Dep
   exit 1
 fi
 
+if ! grep -q -E '^\| G2 \| plan \| .*Delegation Ledger decisions.*Minimum Skill Dependencies' "${run_dir}/plan.md"; then
+  echo "ERROR: G2 gate did not include delegation decision evidence"
+  exit 1
+fi
+
 if ! grep -q -F "## Validation Prerequisites" "${run_dir}/plan.md"; then
   echo "ERROR: plan.md missing Validation Prerequisites"
   exit 1
@@ -282,7 +313,7 @@ if ! grep -q -E '^\| before_requirements \|[^|]+\| \[soft\].*prior PR or attempt
   exit 1
 fi
 
-if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Minimum Skill Dependencies.*prior attempt comparison.*Validation Prerequisites' "${run_dir}/plan.md"; then
+if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Delegation Ledger decisions.*Minimum Skill Dependencies.*prior attempt comparison.*Validation Prerequisites' "${run_dir}/plan.md"; then
   echo "ERROR: before_plan hook did not include minimum skill dependency, prior attempt comparison, and validation prerequisite actions"
   exit 1
 fi
@@ -299,6 +330,20 @@ done
 for hook in before_requirements before_plan before_edit after_edit before_commit before_pr after_pr before_final; do
   if ! grep -R -q -E "^\| ${hook} \|[^|]+\| \[hard\]" "${hard_run_dir}"; then
     echo "ERROR: ${hook} hook did not honor --gate-type hard"
+    exit 1
+  fi
+done
+
+bash scripts/init-delivery-run.sh "${lite_run_id}" --root "${tmp_dir}" --request "Initialize lite mode artifacts" --mode lite >/dev/null
+
+if ! grep -q -F "\"run_id\": \"${lite_run_id}\"" "${hook_config}" || ! grep -q -F '"mode": "lite"' "${hook_config}"; then
+  echo "ERROR: lite hook config missing expected mode fields"
+  exit 1
+fi
+
+for file in requirements.md plan.md verification.md delivery-report.md; do
+  if ! grep -q -F "Mode: lite" "${lite_run_dir}/${file}"; then
+    echo "ERROR: initialized ${file} did not honor --mode lite"
     exit 1
   fi
 done

@@ -6,6 +6,15 @@ Mobius Harness is the delivery orchestration entrypoint for this skill suite. It
 
 Use `mobius-harness` when a user asks for an end-to-end software delivery outcome rather than a single narrow analysis task.
 
+The loop has two modes:
+
+| Mode | Use When | State Contract |
+|---|---|---|
+| `lite` | Small, low-risk work where the final response can carry the whole delivery state. | Follow G1-G8 in order and report compact Gate, Delegation, validation, risk, and follow-up evidence. |
+| `full` | Normal delivery, risky changes, release/security/migration work, multi-module changes, PR/MR work, CI/CD tracking, user-requested auditability, or resumable handoff work. | Persist `.delivery/runs/<run-id>/` and maintain Gate, Delegation, Hook, and Review Ledgers for every phase/subphase. |
+
+Legacy mapping: former `Lightweight` is `lite`; former `Standard` is `full` with default soft hook gates; former `Strict` is `full` with hard hook gates or explicit hard rows where policy or risk requires blocking.
+
 The loop is:
 
 ```text
@@ -16,7 +25,7 @@ Every transition is controlled by a gate. A gate is not satisfied by prose alone
 
 ## Delivery Episode Package
 
-For long or risky tasks, Mobius Harness records work as a Delivery Episode Package under:
+For full tasks, Mobius Harness records work as a Delivery Episode Package under:
 
 ```text
 .delivery/runs/<run-id>/
@@ -31,12 +40,12 @@ These files are execution artifacts and `.delivery/runs/` is ignored by git by d
 Initialize a package with the repository script:
 
 ```bash
-bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
+bash scripts/init-delivery-run.sh <run-id> --request "<user request>" [--mode full|lite] [--gate-type soft|hard] [--runtime auto|codex|claude-code|claude|generic]
 ```
 
-The script creates the four artifacts with Gate Ledger, Hook Ledger, and Review Ledger rows already present. It also writes `.delivery/hooks/config.json`, `.delivery/hooks/agent_gate.sh`, and one executable `.delivery/hooks/<hook-id>.sh` gate script for each required hook. Those scripts read the active run from the hook config and fail when the corresponding Hook Ledger row is missing, `blocked`, points at a missing artifact, or tries to use `warn` on a hard gate. The initialization follows the existing project-level agent hook shape: Claude Code receives a `.claude/settings.json` `PreToolUse` / `matcher: Bash` command hook, Codex receives the same shape under `.codex/settings.json`, and `generic` writes both. In git repositories, generated scaffold is excluded through `.git/info/exclude` so `.delivery/`, `.claude/settings*.json`, and `.codex/settings*.json` do not appear in PR or MR diffs; if `settings.json` is already tracked, initialization writes `settings.local.json` instead of modifying the tracked file. Generated hooks include the agent gate mode prefix from `hook-policy.md`; initialization defaults to `[soft]` and can be made blocking with `--gate-type hard`. Generated hook actions are runtime-specific; `--runtime auto` detects Codex or Claude Code from agent-runtime environment signals and falls back to `generic`, while explicit `--runtime codex`, `--runtime claude-code`, or `--runtime generic` pins the wording and evidence expectations. `--runtime claude` is accepted as an input alias for `--runtime claude-code` and still records `Runtime: claude-code`. Initialized artifacts intentionally start as active/draft with blocked rows; use them as the starting state, then run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` only when the delivery is ready for final Standard or Strict validation.
+The script creates the four artifacts with `Mode`, Gate Ledger, Delegation Ledger, Hook Ledger, and Review Ledger rows already present. It also writes `.delivery/hooks/config.json`, `.delivery/hooks/agent_gate.sh`, and one executable `.delivery/hooks/<hook-id>.sh` gate script for each required hook. Those scripts read the active run from the hook config and fail when the corresponding Hook Ledger row is missing, `blocked`, points at a missing artifact, or tries to use `warn` on a hard gate. The initialization follows the existing project-level agent hook shape: Claude Code receives a `.claude/settings.json` `PreToolUse` / `matcher: Bash` command hook, Codex receives the same shape under `.codex/settings.json`, and `generic` writes both. In git repositories, generated scaffold is excluded through `.git/info/exclude` so `.delivery/`, `.claude/settings*.json`, and `.codex/settings*.json` do not appear in PR or MR diffs; if `settings.json` is already tracked, initialization writes `settings.local.json` instead of modifying the tracked file. Generated hooks include the agent gate mode prefix from `hook-policy.md`; initialization defaults to `[soft]` and can be made blocking with `--gate-type hard`. Generated hook actions are runtime-specific; `--runtime auto` detects Codex or Claude Code from agent-runtime environment signals and falls back to `generic`, while explicit `--runtime codex`, `--runtime claude-code`, or `--runtime generic` pins the wording and evidence expectations. `--runtime claude` is accepted as an input alias for `--runtime claude-code` and still records `Runtime: claude-code`. Initialized artifacts intentionally start as active/draft with blocked rows; use them as the starting state, then run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` only when the full delivery is ready for final validation.
 
-For short tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: requirements, implementation summary, validation, review, sensitive information scan, PR or MR URL when present, CI/CD state, risks, and follow-ups.
+For lite tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: phase state, compact Gate Ledger, Delegation Ledger, implementation summary, validation, review, sensitive information scan, PR or MR URL when present, CI/CD state, risks, and follow-ups.
 
 ## Reference Map
 
@@ -52,13 +61,14 @@ Detailed standards live with the `mobius-harness` skill so agents can load only 
 
 Mobius Harness must:
 
-- select `Lightweight`, `Standard`, or `Strict` mode at the start,
+- select `lite` or `full` mode at the start,
 - follow ordered blocking gates from requirements to final report,
 - record issue context and prior attempts when the task references an issue, PR, fork, commit, or previous fix,
 - compare discovered prior attempts during planning before choosing or validating an approach,
 - split large, risky, or blocked work into subphases,
-- maintain Goal, Checklist, Gate Ledger, Review Ledger, Todo List, Failure List, and Change List for each phase or subphase,
-- maintain a Hook Ledger for Standard and Strict deliveries so Claude Code/Codex controls are evidenced before risky transitions,
+- maintain Goal, Checklist, Gate Ledger, Delegation Ledger, Review Ledger, Todo List, Failure List, and Change List for each phase or subphase,
+- record distinct subagent roles in the Delegation Ledger for every phase rather than one generic specialist owner,
+- maintain a Hook Ledger for full deliveries so Claude Code/Codex controls are evidenced before risky transitions,
 - classify Hook Ledger actions as `[hard]` blocking gates or `[soft]` advisory gates; soft warnings may continue only with evidence and mirrored Failure List / Change List rows,
 - default PR/MR CI/CD follow-up to asynchronous observation during small iterative updates unless the user requests full waiting, the delivery is about to merge or release, or policy requires terminal checks,
 - record Superpowers spec/plan artifacts or fallback decisions when those skills are used or unavailable,
@@ -68,7 +78,7 @@ Mobius Harness must:
 - record a Dependency Decision before implementation,
 - require evidence before marking any phase or delivery complete,
 - stop at any `blocked` gate until evidence is added, the gate is marked `not-applicable`, or an explicit `exception` is recorded,
-- run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before completing Standard or Strict deliveries when persisted artifacts exist,
+- run `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` before completing full deliveries when persisted artifacts exist,
 - follow `local-repo-development` for worktree, branch, commit, PR/MR, and CI/CD handling,
 - produce a delivery report that can be sent to the user or attached to a PR/MR.
 
@@ -85,7 +95,7 @@ Mobius Harness can apply other skills as needed:
 - `commit-message-writer` for conventional commit messages.
 - `team-subagent-orchestrator` only when the user explicitly authorizes delegation.
 - `superpowers:brainstorming` for creative work, feature shaping, unclear product intent, or competing solution paths.
-- `superpowers:writing-plans` for Standard or Strict deliveries that need a multi-step executable implementation plan.
+- `superpowers:writing-plans` for full deliveries that need a multi-step executable implementation plan.
 
 ## Completion Rule
 
@@ -93,7 +103,7 @@ Mobius Harness should not consider a delivery complete until it has clarified hi
 
 For issue-driven work, the requirements artifact should include `Issue and Prior Attempts`, and the plan should include `Prior Attempt Comparison`. If an earlier PR or forked commit exists, the plan must state what is reused, what differs, what stale assumptions were rejected, and what fresh endpoint, package, or platform evidence was gathered before implementation.
 
-For Standard and Strict deliveries, the Delivery Episode Package must contain terminal Gate Ledger rows for `G1` through `G8`, terminal Hook Ledger rows for the required hooks in `hook-policy.md`, and terminal Review Ledger rows for the required reviews in `delivery-process.md`. Gate and Review Ledger terminal statuses are `pass`, `not-applicable`, or `exception`; Hook Ledger terminal statuses are `pass`, `not-applicable`, `exception`, or valid soft-gate `warn`. Any `blocked` gate, hook, or review means the delivery is not complete.
+For full deliveries, the Delivery Episode Package must contain terminal Gate Ledger rows for `G1` through `G8`, terminal Delegation Ledger rows for phase skill decisions, terminal Hook Ledger rows for the required hooks in `hook-policy.md`, and terminal Review Ledger rows for the required reviews in `delivery-process.md`. Gate and Review Ledger terminal statuses are `pass`, `not-applicable`, or `exception`; Hook Ledger terminal statuses are `pass`, `not-applicable`, `exception`, or valid soft-gate `warn`. Any `blocked` gate, delegation, hook, or review means the delivery is not complete.
 
 Committed fixtures under `examples/delivery-runs/` demonstrate passing, accepted-exception, and blocked delivery packages. CI runs the validator regression script against those fixtures and generated negative cases so gate, hook, and adversarial review behavior remains executable.
 
