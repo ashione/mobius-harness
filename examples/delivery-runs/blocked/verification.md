@@ -16,9 +16,12 @@ Provide remaining gates so the negative fixture fails specifically on blocked G1
 
 - [x] Worktree or branch and base ref are recorded.
 - [x] Changed files are intentional and mapped to acceptance criteria.
+- [x] Target behavior, current behavior, and owning files/functions are recorded before editing.
+- [x] First-principles fit, surgical change scope, and fallback/redundancy review are complete.
 - [x] Local validation commands are run or marked unavailable with reason.
 - [x] Diff review is complete.
 - [x] Sensitive information scan is complete.
+- [x] Generated harness state is absent from staged or tracked commit scope.
 - [x] PR/MR state is recorded or marked not applicable.
 - [x] CI/CD terminal state is recorded or marked not applicable.
 
@@ -27,8 +30,8 @@ Provide remaining gates so the negative fixture fails specifically on blocked G1
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 | G3 | local-development | Worktree or branch, base ref, and dirty-state handling are recorded. | pass | reason:fixture has no live worktree state | |
-| G4 | implementation | Changed files are intentional and mapped to acceptance criteria. | pass | file:examples/delivery-runs/blocked/verification.md | |
-| G5 | verification | Local commands, command results, diff review, sensitive information scan, and unresolved risks are recorded. | pass | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/blocked | |
+| G4 | implementation | Changed files are intentional, mapped to acceptance criteria, limited to the owning surface, and free of unjustified fallback or redundant code. | pass | file:examples/delivery-runs/blocked/verification.md | |
+| G5 | verification | Local commands, command results, diff review, first-principles fit, surgical scope review, fallback/redundancy review, sensitive information scan, generated-state git hygiene, and unresolved risks are recorded. | pass | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/blocked | |
 | G6 | pr-mr | PR/MR URL or not-applicable reason is recorded. | not-applicable | reason:fixture is not a real PR delivery | |
 | G7 | ci-cd | Terminal CI/CD state, async observation state, or not-applicable reason is recorded. | not-applicable | reason:fixture is validated by repository CI when committed | |
 
@@ -36,9 +39,9 @@ Provide remaining gates so the negative fixture fails specifically on blocked G1
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_edit | before editing files | [hard] Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes. | pass | reason:fixture has no live worktree state | |
-| after_edit | after editing files | [hard] Map changed files to acceptance criteria and check for unintended churn. | pass | file:examples/delivery-runs/blocked/verification.md | |
-| before_commit | before commit or PR/MR preparation | [hard] Run or record local validation, diff review, and sensitive information scan. | pass | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/blocked | |
+| before_edit | before editing files | [hard] Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, target behavior, current behavior, owning files/functions, affected paths, and preservation of unrelated changes. | pass | reason:fixture has no live worktree state | |
+| after_edit | after editing files | [hard] Map changed files to acceptance criteria, confirm the diff is surgical, and check for unintended churn or unjustified fallback/redundant code. | pass | file:examples/delivery-runs/blocked/verification.md | |
+| before_commit | before commit or PR/MR preparation | [hard] Run or record local validation, first-principles fit, surgical scope review, fallback/redundancy review, diff review, sensitive information scan, and git hygiene evidence that generated harness state is not staged or tracked for commit. | pass | cmd:bash scripts/validate-delivery-run.sh examples/delivery-runs/blocked | |
 | before_pr | before PR/MR creation or not-applicable decision | [hard] Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created. | not-applicable | reason:fixture is not a real PR delivery | |
 | after_pr | after PR/MR creation or not-applicable decision | [soft] Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up. | not-applicable | reason:fixture is validated by repository CI when committed | |
 
@@ -90,6 +93,18 @@ Validator must reject blocked G1.
 
 Fixture maps to G1-G8.
 
+### First-Principles Fit
+
+Fixture changes preserve the validator invariant directly.
+
+### Surgical Change Scope
+
+Fixture scope is limited to delivery-run artifacts and validator expectations.
+
+### Fallback and Redundancy Review
+
+No fallback, compatibility shim, defensive branch, abstraction, retry, or redundant code is added.
+
 ### Implementation Quality
 
 Markdown is minimal and explicit.
@@ -101,6 +116,10 @@ Negative fixture covers blocked gate rejection.
 ### Security and Sensitive Information
 
 No sensitive values.
+
+### Generated-State Git Hygiene
+
+Generated harness state is not staged or tracked for fixture scope.
 
 ## Sensitive Information Scan
 

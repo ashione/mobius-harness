@@ -171,6 +171,7 @@ require_artifact_sections() {
         "Risks"
         "Open Questions"
         "User Decisions"
+        "Instruction Evidence"
         "Issue and Prior Attempts"
         "Minimum Skill Dependencies"
         "Uncertainty Register"
@@ -187,6 +188,7 @@ require_artifact_sections() {
         "Prior Attempt Comparison"
         "Design Options"
         "Design Readiness"
+        "First-Principles Design Check"
         "Dependency Decision"
         "Implementation Steps"
         "Validation Strategy"
@@ -215,6 +217,7 @@ require_artifact_sections() {
         "Changed Files"
         "Validation Summary"
         "PR/MR and CI/CD"
+        "Cleanup"
         "Risks and Follow-ups"
         "Release Notes"
         "Version or Release Report"
@@ -228,9 +231,13 @@ require_artifact_sections() {
 
   if [[ "${file}" == "verification.md" ]]; then
     require_marker "${path}" "${file}" "### Requirements Compliance"
+    require_marker "${path}" "${file}" "### First-Principles Fit"
+    require_marker "${path}" "${file}" "### Surgical Change Scope"
+    require_marker "${path}" "${file}" "### Fallback and Redundancy Review"
     require_marker "${path}" "${file}" "### Implementation Quality"
     require_marker "${path}" "${file}" "### Test Adequacy"
     require_marker "${path}" "${file}" "### Security and Sensitive Information"
+    require_marker "${path}" "${file}" "### Generated-State Git Hygiene"
   fi
 }
 

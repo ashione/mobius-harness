@@ -231,14 +231,14 @@ hook_action() {
   esac
 }
 
-before_requirements_action="$(hook_action "Read user goal, repo instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision.")"
-before_plan_action="$(hook_action "Record skill activation, Delegation Ledger decisions, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision.")"
-before_edit_action="$(hook_action "Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, affected paths, and preservation of unrelated changes.")"
-after_edit_action="$(hook_action "Map changed files to acceptance criteria and check for unintended churn.")"
-before_commit_action="$(hook_action "Run or record local validation, diff review, and sensitive information scan.")"
+before_requirements_action="$(hook_action "Read user goal, applicable repo and path-specific instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision.")"
+before_plan_action="$(hook_action "Record skill activation, Delegation Ledger decisions, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, first-principles design check, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision.")"
+before_edit_action="$(hook_action "Confirm Requirements Maturity and Design Readiness, repo/worktree state, dirty-state handling, target behavior, current behavior, owning files/functions, affected paths, and preservation of unrelated changes.")"
+after_edit_action="$(hook_action "Map changed files to acceptance criteria, confirm the diff is surgical, and check for unintended churn or unjustified fallback/redundant code.")"
+before_commit_action="$(hook_action "Run or record local validation, first-principles fit, surgical scope review, fallback/redundancy review, diff review, sensitive information scan, and git hygiene evidence that generated harness state is not staged or tracked for commit.")"
 before_pr_action="$(hook_action "Record commit/head state, PR/MR body readiness, review status, and reason when no PR/MR is created.")"
 after_pr_action="$(hook_action "Record PR/MR URL or not-applicable reason, CI/CD observation plan, terminal check state, and failure follow-up.")"
-before_final_action="$(hook_action "Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report.")"
+before_final_action="$(hook_action "Re-check evidence before claims, merge state, generated-state commit hygiene, cleanup of harness-created worktrees and state files, local runtime sync when applicable, risks, follow-ups, and release/version report.")"
 
 write_hook_gate_script() {
   local hook_id="$1"
@@ -575,6 +575,7 @@ Capture requirements before planning or editing.
 - [ ] Success criteria are verifiable.
 - [ ] Scope and non-goals are explicit.
 - [ ] High-impact unknowns are resolved or recorded.
+- [ ] Applicable repo and path-specific instructions are read or marked not applicable with evidence.
 - [ ] Linked issues, existing PRs, fork commits, or previous attempts are searched or marked not applicable with evidence.
 - [ ] Blocking unknowns are resolved or explicitly accepted.
 - [ ] Minimum Skill Dependencies are checked, including required Superpowers decisions.
@@ -585,7 +586,7 @@ Capture requirements before planning or editing.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | decision:${request_cell} | |
+| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, Instruction Evidence, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | decision:${request_cell} | |
 
 ### Hook Ledger
 
@@ -656,6 +657,11 @@ TBD
 
 ${request_cell}
 
+## Instruction Evidence
+
+- Applicable Instructions: blocked until repository and path-specific instruction files are read or marked not applicable.
+- Precedence Decision: blocked until user, repository, and path instruction precedence is recorded.
+
 ## Issue and Prior Attempts
 
 - Prior Attempt Search: blocked until linked issues, existing PRs, fork commits, issue comments, and related branches are searched or marked not applicable.
@@ -714,6 +720,7 @@ Define the implementation plan after G1 is resolved.
 - [ ] Implementation steps are ordered.
 - [ ] Prior attempts are compared against the selected approach or marked not applicable with evidence.
 - [ ] Design options and rejected alternatives are recorded.
+- [ ] First-principles design check is recorded.
 - [ ] Design Readiness is \`ready-for-implementation\` or explicitly excepted.
 - [ ] Validation strategy covers success criteria.
 - [ ] Validation prerequisites are recorded before validation commands.
@@ -725,7 +732,7 @@ Define the implementation plan after G1 is resolved.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, first-principles design check, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | blocked | file:.delivery/runs/${run_id}/requirements.md | |
 
 ### Hook Ledger
 
@@ -808,6 +815,13 @@ TBD
 - Acceptance Mapping: TBD
 - Start Gate: file:.delivery/runs/${run_id}/plan.md
 
+## First-Principles Design Check
+
+- Core Objective: TBD
+- Required Invariant: TBD
+- Owning Mechanism: TBD
+- Smallest Direct Change: TBD
+
 ## Dependency Decision
 
 - Decision: \`no-new-dependency\`
@@ -862,9 +876,12 @@ Record local development, implementation, verification, PR/MR, and CI/CD evidenc
 
 - [ ] Worktree or branch and base ref are recorded.
 - [ ] Changed files are intentional and mapped to acceptance criteria.
+- [ ] Target behavior, current behavior, and owning files/functions are recorded before editing.
+- [ ] First-principles fit, surgical change scope, and fallback/redundancy review are complete.
 - [ ] Local validation commands are run or marked unavailable with reason.
 - [ ] Diff review is complete.
 - [ ] Sensitive information scan is complete.
+- [ ] Generated harness state is confirmed absent from staged or tracked commit scope.
 - [ ] PR/MR state is recorded or marked not applicable.
 - [ ] CI/CD terminal state is recorded or marked not applicable.
 
@@ -873,8 +890,8 @@ Record local development, implementation, verification, PR/MR, and CI/CD evidenc
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
 | G3 | local-development | Worktree or branch, base ref, and dirty-state handling are recorded. | blocked | file:.delivery/runs/${run_id}/verification.md | |
-| G4 | implementation | Changed files are intentional and mapped to acceptance criteria. | blocked | file:.delivery/runs/${run_id}/verification.md | |
-| G5 | verification | Local commands, command results, diff review, sensitive information scan, and unresolved risks are recorded. | blocked | file:.delivery/runs/${run_id}/verification.md | |
+| G4 | implementation | Changed files are intentional, mapped to acceptance criteria, limited to the owning surface, and free of unjustified fallback or redundant code. | blocked | file:.delivery/runs/${run_id}/verification.md | |
+| G5 | verification | Local commands, command results, diff review, first-principles fit, surgical scope review, fallback/redundancy review, sensitive information scan, generated-state git hygiene, and unresolved risks are recorded. | blocked | file:.delivery/runs/${run_id}/verification.md | |
 | G6 | pr-mr | PR/MR URL or not-applicable reason is recorded. | blocked | file:.delivery/runs/${run_id}/verification.md | |
 | G7 | ci-cd | Terminal CI/CD state, async observation state, or not-applicable reason is recorded. | blocked | file:.delivery/runs/${run_id}/verification.md | |
 
@@ -935,6 +952,18 @@ TBD
 
 TBD
 
+### First-Principles Fit
+
+TBD
+
+### Surgical Change Scope
+
+TBD
+
+### Fallback and Redundancy Review
+
+TBD
+
 ### Implementation Quality
 
 TBD
@@ -944,6 +973,10 @@ TBD
 TBD
 
 ### Security and Sensitive Information
+
+TBD
+
+### Generated-State Git Hygiene
 
 TBD
 
@@ -986,6 +1019,7 @@ Summarize completed delivery evidence after G1-G7 are terminal.
 - [ ] Implementation and changed files are summarized.
 - [ ] Validation, review, and sensitive scan are summarized.
 - [ ] PR/MR and CI/CD state are summarized.
+- [ ] Harness-created worktrees and generated state cleanup are summarized.
 - [ ] Risks and follow-ups are explicit.
 - [ ] Version or release report notes are recorded when applicable.
 
@@ -993,7 +1027,7 @@ Summarize completed delivery evidence after G1-G7 are terminal.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, risks, follow-ups, and version or release report notes. | blocked | file:.delivery/runs/${run_id}/delivery-report.md | |
+| G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, cleanup, risks, follow-ups, and version or release report notes. | blocked | file:.delivery/runs/${run_id}/delivery-report.md | |
 
 ### Hook Ledger
 
@@ -1053,6 +1087,10 @@ TBD
 TBD
 
 ## PR/MR and CI/CD
+
+TBD
+
+## Cleanup
 
 TBD
 

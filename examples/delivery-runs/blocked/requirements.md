@@ -26,13 +26,13 @@ Show a blocked requirements gate that the validator must reject.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | decision:fixture intentionally blocks G1 | |
+| G1 | requirements | Goal, success criteria, scope, non-goals, risks, open questions, user decisions, Instruction Evidence, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision are explicit. | blocked | decision:fixture intentionally blocks G1 | |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_requirements | before G1 completion | [hard] Read user goal, repo instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision. | pass | decision:fixed fixture requirements reviewed | |
+| before_requirements | before G1 completion | [hard] Read user goal, applicable repo and path-specific instructions, relevant specs/docs, issue context, prior PR or attempt search, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and brainstorming decision. | pass | decision:fixed fixture requirements reviewed | |
 
 ### Review Ledger
 
@@ -97,6 +97,11 @@ None.
 ## User Decisions
 
 Fixture uses `superpowers:brainstorming` as not applicable.
+
+## Instruction Evidence
+
+- Applicable Instructions: `README.md`, `docs/SKILL_SPEC.md`, `docs/HARNESS.md`, and `skills/mobius-harness/SKILL.md` represent fixture constraints.
+- Precedence Decision: fixture-local evidence follows repository harness docs.
 
 ## Issue and Prior Attempts
 

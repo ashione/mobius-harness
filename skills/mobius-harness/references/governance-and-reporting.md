@@ -28,6 +28,7 @@ Delivery is done only when:
 - issue context and prior attempts are recorded or marked not applicable with evidence when the task is issue, bug, PR, or external-fix driven,
 - Requirements Maturity is `ready-for-design` or explicitly excepted with accepted risk,
 - Design Readiness is `ready-for-implementation` or explicitly excepted with accepted risk,
+- first-principles design and implementation evidence is recorded,
 - mode is selected as `lite` or `full` and recorded in the final response or persisted artifacts,
 - Minimum Skill Dependencies are recorded in requirements and plan, including Superpowers dependency handling,
 - Delegation Ledger decisions are recorded for each phase, including not-applicable evidence when no specialist skill is delegated,
@@ -42,10 +43,13 @@ Delivery is done only when:
 - no Review Ledger row is `blocked`,
 - local validation is complete or unavailable with reason,
 - diff review is complete,
+- surgical scope and fallback/redundancy reviews are complete,
 - sensitive information scan is complete,
+- generated harness state is confirmed absent from staged or tracked commit scope,
 - PR/MR state is recorded or not applicable with reason,
 - CI/CD terminal state is recorded or not applicable with reason,
 - `bash scripts/validate-delivery-run.sh .delivery/runs/<run-id>` passes for full deliveries when the script exists, or its unavailability is recorded as an exception,
+- harness-created temporary worktrees and generated state files are removed, not applicable, or explicitly preserved/deferred with owner, reason, and ignore evidence,
 - open failures are fixed, accepted, or deferred,
 - delivery report is complete.
 
@@ -60,8 +64,12 @@ Mobius Harness must not:
 - advance past a blocked hook,
 - advance past a blocked adversarial review,
 - start coding while requirements maturity or design readiness is blocked,
+- add fallback, compatibility, defensive, abstraction, retry, or redundant code without a requirement, observed failure, or documented platform constraint,
+- broaden the diff beyond the owning surface without recording why the broader surface is necessary,
 - mark an exception without recording the accepted risk in Failure List and Change List,
 - delete or overwrite unrelated user changes,
+- stage or commit generated harness state files such as `.delivery/`, `.delivery/hooks/`, `.claude/settings*.json`, or `.codex/settings*.json`,
+- remove a worktree or generated state directory that contains uncommitted user changes,
 - commit secrets or print secret values,
 - run destructive operations without explicit authorization,
 - hide unresolved failures in the final report.
@@ -81,6 +89,7 @@ PR/MR body should include:
 - `Delivery Episode`
 - `Dependency Decision`
 - `CI/CD Follow-up`
+- `Cleanup`
 
 Version or release report should include:
 
