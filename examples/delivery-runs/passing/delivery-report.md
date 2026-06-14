@@ -18,6 +18,7 @@ Show a complete report gate.
 - [x] Implementation and changed files are summarized.
 - [x] Validation, review, and sensitive scan are summarized.
 - [x] PR/MR and CI/CD state are summarized.
+- [x] Cleanup state is summarized.
 - [x] Risks and follow-ups are explicit.
 - [x] Version or release report notes are recorded when applicable.
 
@@ -25,20 +26,20 @@ Show a complete report gate.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, risks, follow-ups, and release notes. | pass | file:examples/delivery-runs/passing/delivery-report.md | |
+| G8 | report | Final delivery report includes requirements, implementation, changed files, validation, review, sensitive scan, PR/MR, CI/CD, cleanup, risks, follow-ups, and release notes. | pass | file:examples/delivery-runs/passing/delivery-report.md | |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_final | before final delivery report | [hard] Re-check evidence before claims, merge state, cleanup state, local runtime sync when applicable, risks, follow-ups, and release/version report. | pass | file:examples/delivery-runs/passing/delivery-report.md | |
+| before_final | before final delivery report | [hard] Re-check evidence before claims, merge state, generated-state commit hygiene, cleanup of harness-created worktrees and state files, local runtime sync when applicable, risks, follow-ups, and release/version report. | pass | file:examples/delivery-runs/passing/delivery-report.md | |
 
 ### Review Ledger
 
 | Review | Role | Perspective | Challenge | Status | Resolution | Evidence |
 |---|---|---|---|---|---|---|
 | report_delivery | Delivery | User-facing result | Does the report answer what changed and what remains? | pass | Summary and changed files are recorded. | file:examples/delivery-runs/passing/delivery-report.md |
-| report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | pass | CI/CD and release notes are recorded for fixture scope. | file:examples/delivery-runs/passing/delivery-report.md |
+| report_operations | Operations | CI/CD, cleanup, and release | Are async CI, cleanup, and release/version notes explicit? | pass | CI/CD, cleanup, and release notes are recorded for fixture scope. | file:examples/delivery-runs/passing/delivery-report.md |
 | report_user | User Advocate | Clarity and unsupported claims | Are claims backed by evidence and easy to act on? | pass | Report evidence points to fixture files. | file:examples/delivery-runs/passing/delivery-report.md |
 
 ### Delegation Ledger
@@ -87,6 +88,10 @@ Validator should pass.
 ## PR/MR and CI/CD
 
 Not applicable for fixture; repository CI validates it.
+
+## Cleanup
+
+No harness-created worktree or generated state persists for fixture scope.
 
 ## Risks and Follow-ups
 

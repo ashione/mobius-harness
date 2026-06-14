@@ -94,6 +94,7 @@ The generated scaffold follows project-level agent hook settings:
 - `generic` writes both.
 - In git repositories, `.delivery/`, `.claude/settings*.json`, and `.codex/settings*.json` are added to `.git/info/exclude` so they do not enter PR/MR diffs.
 - If `.claude/settings.json` or `.codex/settings.json` is already tracked, initialization writes `settings.local.json` instead of modifying the tracked file.
+- Generated scaffold is local state: it must not be staged or committed, and final reports must record cleanup or preservation evidence for `.delivery/`, runtime settings files, and harness-created temporary worktrees.
 
 Initialization settings:
 
@@ -185,9 +186,9 @@ The repository includes `examples/delivery-runs/` as executable fixtures:
 
 CI validates both positive fixtures and negative fixtures.
 
-`scripts/test-delivery-run-validator.sh` generates temporary negative cases for missing `Mode`, missing Delegation Ledger, missing Issue and Prior Attempts, missing Prior Attempt Comparison, missing Minimum Skill Dependencies, missing Validation Prerequisites, missing Superpowers decisions, missing Requirements Maturity, missing Design Readiness, missing Dependency Decision, duplicate gates, missing release report, missing Hook Ledger, blocked hooks, hard gates downgraded to `warn`, soft-gate warning audit records, misplaced hooks, duplicate hooks, missing Review Ledger, blocked reviews, misplaced reviews, and duplicate reviews.
+`scripts/test-delivery-run-validator.sh` generates temporary negative cases for missing `Mode`, missing Delegation Ledger, missing Instruction Evidence, missing Issue and Prior Attempts, missing Prior Attempt Comparison, missing Minimum Skill Dependencies, missing First-Principles Design Check, missing Validation Prerequisites, missing Superpowers decisions, missing Requirements Maturity, missing Design Readiness, missing Dependency Decision, missing surgical scope or fallback/redundancy review, duplicate gates, missing release report, missing cleanup report, missing Hook Ledger, blocked hooks, hard gates downgraded to `warn`, soft-gate warning audit records, misplaced hooks, duplicate hooks, missing Review Ledger, blocked reviews, misplaced reviews, and duplicate reviews.
 
-`scripts/test-init-delivery-run.sh` checks that initialization generates complete Mode, Gate/Delegation/Hook/Review Ledger scaffolding, issue and prior-attempt sections, prior-attempt comparison, minimum skill dependencies, validation prerequisites, soft/hard gate labels, Codex/Claude Code/generic runtime-specific hooks, automatic Codex runtime detection, and overwrite protection.
+`scripts/test-init-delivery-run.sh` checks that initialization generates complete Mode, Gate/Delegation/Hook/Review Ledger scaffolding, instruction evidence, issue and prior-attempt sections, prior-attempt comparison, minimum skill dependencies, first-principles design check, validation prerequisites, implementation discipline review sections, generated-state git hygiene and cleanup sections, soft/hard gate labels, Codex/Claude Code/generic runtime-specific hooks, automatic Codex runtime detection, and overwrite protection.
 
 `examples/pressure-scenarios/mobius-harness.md` provides manual or agent-to-agent pressure scenarios that check whether an agent actually stops when requirements, plans, gates, hooks, reviews, or mirrored exceptions are missing.
 

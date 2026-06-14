@@ -14,9 +14,9 @@ For full tasks, Mobius Harness records work under:
   delivery-report.md
 ```
 
-These files are execution artifacts and `.delivery/runs/` is ignored by git by default.
+These files are execution artifacts and `.delivery/runs/` is ignored by git by default. Generated `.delivery/` state, `.delivery/hooks/`, and runtime settings files under `.claude/` or `.codex/` are local state; they must not be staged or committed. The final report must record cleanup or preservation evidence before the delivery is complete.
 
-For `lite` tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: phase state, compact Gate Ledger, Delegation Ledger, implementation summary, validation, review, sensitive information scan, PR or MR URL when present, CI/CD state, risks, and follow-ups.
+For `lite` tasks, the final response may replace persisted artifacts, but it still needs to include the same facts: phase state, compact Gate Ledger, Delegation Ledger, implementation summary, validation, review, sensitive information scan, generated-state git hygiene, PR or MR URL when present, CI/CD state, cleanup, risks, and follow-ups.
 
 ## Artifact Standard
 
@@ -129,6 +129,7 @@ Evidence format:
 - `Risks`
 - `Open Questions`
 - `User Decisions`
+- `Instruction Evidence`
 - `Issue and Prior Attempts`
 - `Minimum Skill Dependencies`
 - `Uncertainty Register`
@@ -148,6 +149,7 @@ Evidence format:
 - `Prior Attempt Comparison`
 - `Design Options`
 - `Design Readiness`
+- `First-Principles Design Check`
 - `Dependency Decision`
 - `Implementation Steps`
 - `Validation Strategy`
@@ -167,6 +169,9 @@ Evidence format:
 - `Command Results`
 - `Diff Review`
   - `Requirements Compliance`
+  - `First-Principles Fit`
+  - `Surgical Change Scope`
+  - `Fallback and Redundancy Review`
   - `Implementation Quality`
   - `Test Adequacy`
   - `Security and Sensitive Information`
@@ -174,6 +179,7 @@ Evidence format:
 - `PR/MR`
 - `CI/CD`
 - `Unresolved Risks`
+- Generated-state git hygiene evidence for `.delivery/`, `.delivery/hooks/`, `.claude/settings*.json`, and `.codex/settings*.json` when those paths exist.
 
 ### delivery-report.md
 
@@ -188,6 +194,7 @@ Evidence format:
 - `Changed Files`
 - `Validation Summary`
 - `PR/MR and CI/CD`
+- `Cleanup`
 - `Risks and Follow-ups`
 - `Release Notes`
 - `Version or Release Report`

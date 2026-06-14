@@ -73,6 +73,33 @@ for hook in before_requirements before_plan before_edit after_edit before_commit
   fi
 done
 
+if ! grep -q -F "### Generated-State Git Hygiene" "${run_dir}/verification.md"; then
+  echo "ERROR: initialized verification artifact missing generated-state git hygiene section"
+  exit 1
+fi
+
+if ! grep -q -F "## First-Principles Design Check" "${run_dir}/plan.md"; then
+  echo "ERROR: initialized plan artifact missing first-principles design check section"
+  exit 1
+fi
+
+for marker in "### First-Principles Fit" "### Surgical Change Scope" "### Fallback and Redundancy Review"; do
+  if ! grep -q -F "${marker}" "${run_dir}/verification.md"; then
+    echo "ERROR: initialized verification artifact missing implementation discipline section: ${marker}"
+    exit 1
+  fi
+done
+
+if ! grep -q -F "## Instruction Evidence" "${run_dir}/requirements.md"; then
+  echo "ERROR: initialized requirements artifact missing instruction evidence section"
+  exit 1
+fi
+
+if ! grep -q -F "## Cleanup" "${run_dir}/delivery-report.md"; then
+  echo "ERROR: initialized delivery report missing cleanup section"
+  exit 1
+fi
+
 if [[ ! -f "${hook_config}" ]]; then
   echo "ERROR: missing initialized hook config: ${hook_config}"
   exit 1
@@ -313,8 +340,8 @@ if ! grep -q -E '^\| before_requirements \|[^|]+\| \[soft\].*prior PR or attempt
   exit 1
 fi
 
-if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Delegation Ledger decisions.*Minimum Skill Dependencies.*prior attempt comparison.*Validation Prerequisites' "${run_dir}/plan.md"; then
-  echo "ERROR: before_plan hook did not include minimum skill dependency, prior attempt comparison, and validation prerequisite actions"
+if ! grep -q -E '^\| before_plan \|[^|]+\| \[soft\].*Delegation Ledger decisions.*Minimum Skill Dependencies.*prior attempt comparison.*first-principles design check.*Validation Prerequisites' "${run_dir}/plan.md"; then
+  echo "ERROR: before_plan hook did not include minimum skill dependency, prior attempt comparison, first-principles, and validation prerequisite actions"
   exit 1
 fi
 

@@ -29,13 +29,13 @@ Show a complete plan gate for an exception fixture.
 
 | Gate | Phase | Required Evidence | Status | Evidence | Exception |
 |---|---|---|---|---|---|
-| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/exception/plan.md | |
+| G2 | plan | Repo findings, prior attempt comparison, design options, selected approach, rejected alternatives, affected areas, specialist skills, Delegation Ledger decisions, Minimum Skill Dependencies, Superpowers planning decision, first-principles design check, Dependency Decision, implementation steps, validation commands, Validation Prerequisites, acceptance criteria, Design Readiness, rollback notes, and checkpoints are recorded. | pass | file:examples/delivery-runs/exception/plan.md | |
 
 ### Hook Ledger
 
 | Hook | Trigger | Required Action | Status | Evidence | Failure Handling |
 |---|---|---|---|---|---|
-| before_plan | before G2 completion | [hard] Record skill activation, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/exception/plan.md | |
+| before_plan | before G2 completion | [hard] Record skill activation, Minimum Skill Dependencies, tool reality, prior attempt comparison, design options, selected approach, rejected alternatives, first-principles design check, Dependency Decision, validation strategy, Validation Prerequisites, Design Readiness, and writing-plans decision. | pass | file:examples/delivery-runs/exception/plan.md | |
 
 ### Review Ledger
 
@@ -114,6 +114,13 @@ Fixture uses committed example files.
 - Rejected Alternatives: reason:product implementation is outside fixture scope
 - Acceptance Mapping: decision:G1-G8 and required hooks map to validator assertions
 - Start Gate: decision:requirements maturity and design readiness are satisfied for fixture
+
+## First-Principles Design Check
+
+- Core Objective: validate the delivery package contract.
+- Required Invariant: fixture artifacts satisfy G1-G8 and required ledgers without adding product behavior.
+- Owning Mechanism: Markdown fixtures plus scripts/validate-delivery-run.sh.
+- Smallest Direct Change: update only fixture artifacts and validator expectations needed for the contract.
 
 ## Dependency Decision
 

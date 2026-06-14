@@ -52,6 +52,7 @@ Requirements phase must record:
 - success criteria that can be verified,
 - scope and non-goals,
 - constraints and compatibility expectations,
+- applicable repository and path-specific instruction files that were read before planning or editing, plus any precedence decision when user, repo, and path instructions differ,
 - issue context and prior attempts when the task references an issue, bug report, PR, or external fix,
 - open questions and user decisions,
 - uncertainty disposition: `blocking`, `accepted`, `deferred`, or `not-applicable`,
@@ -62,6 +63,7 @@ When issue context exists, record `Issue and Prior Attempts` with evidence from 
 Plan phase must record:
 
 - at least one selected approach and the reason it was chosen,
+- a first-principles design check that names the core objective, required invariant, existing mechanism that owns the invariant, and smallest direct change,
 - a prior attempt comparison when any existing attempt was found, including reuse decisions, differences from the selected approach, and fresh evidence for time-sensitive APIs, package behavior, or platform assumptions,
 - rejected alternatives with tradeoffs,
 - affected areas and interfaces,
@@ -211,14 +213,14 @@ Recommended subphase naming:
 
 | Gate | Phase | Required work | Exit gate |
 |---|---|---|---|
-| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and the `superpowers:brainstorming` decision. | Requirements are specific enough to design, implement, and verify without unresolved blocking unknowns or unseen existing attempts. |
-| `G2` | Plan | Inspect the repo, compare prior attempts and design options, select an approach, record rejected alternatives, select specialist skills, carry forward Minimum Skill Dependencies, define implementation steps, validation commands, Validation Prerequisites, acceptance criteria, rollback notes, checkpoints, Dependency Decision, Design Readiness, and the `superpowers:writing-plans` decision. | Another agent could implement from the plan without choosing strategy, product behavior, architecture, dependency policy, or validation setup. |
+| `G1` | Requirements | Clarify goal, background, success criteria, scope, non-goals, risks, open questions, user decisions, Instruction Evidence, Issue and Prior Attempts, Minimum Skill Dependencies, uncertainty disposition, Requirements Maturity, and the `superpowers:brainstorming` decision. | Requirements are specific enough to design, implement, and verify without unresolved blocking unknowns, unseen existing attempts, or unread applicable instructions. |
+| `G2` | Plan | Inspect the repo, compare prior attempts and design options, select an approach, record rejected alternatives, select specialist skills, carry forward Minimum Skill Dependencies, record the first-principles design check, define implementation steps, validation commands, Validation Prerequisites, acceptance criteria, rollback notes, checkpoints, Dependency Decision, Design Readiness, and the `superpowers:writing-plans` decision. | Another agent could implement from the plan without choosing strategy, product behavior, architecture, dependency policy, validation setup, or the minimal owning surface. |
 | `G3` | Local Development | Follow `local-repo-development`, including worktree or branch selection and preservation of unrelated changes. | Worktree or branch, base ref, and dirty-state handling are recorded. |
-| `G4` | Implementation | Make the scoped change and keep the diff coherent. | Changed files are intentional and mapped to acceptance criteria. |
-| `G5` | Verification | Run local checks, review the diff, and scan for sensitive information. | Validation outcomes, diff review, sensitive scan, and unresolved risks are recorded. |
+| `G4` | Implementation | Make the scoped change after identifying target behavior, current behavior, owning files/functions, and the minimal affected surface. Avoid unjustified fallback, compatibility, defensive, abstraction, retry, or redundant code. | Changed files are intentional, mapped to acceptance criteria, limited to the owning surface, and free of unjustified fallback or redundant code. |
+| `G5` | Verification | Run local checks, review the diff for first-principles fit, surgical change scope, fallback/redundancy, scan for sensitive information, and confirm generated harness state is absent from staged or tracked commit scope. | Validation outcomes, diff review, first-principles fit, surgical scope, fallback/redundancy review, sensitive scan, generated-state git hygiene, and unresolved risks are recorded. |
 | `G6` | PR/MR | Commit and open PR/MR when applicable. | PR/MR URL or not-applicable reason is recorded. |
 | `G7` | CI/CD | Record CI/CD check state when remote checks exist and choose async follow-up or terminal waiting by policy. | Terminal CI/CD state, async observation state, or not-applicable reason is recorded with evidence. |
-| `G8` | Report | Summarize what was delivered and what remains. | Delivery report is complete and can be sent to the user or attached to PR/MR. |
+| `G8` | Report | Summarize what was delivered, what cleanup was performed or deferred, and what remains. | Delivery report is complete, cleanup is done/not applicable/deferred with evidence, and the report can be sent to the user or attached to PR/MR. |
 
 ## Phase State Standard
 
